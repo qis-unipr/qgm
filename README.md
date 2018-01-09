@@ -1,2 +1,2 @@
 # QuantumNetworking
-Quantum protocols implemented by means of SimulaQron
+Quantum protocols implemented by means of [SimulaQron](https://github.com/StephanieWehner/SimulaQron)
