@@ -1,6 +1,9 @@
 Quantum Geometric Monitoring (QGM) - 1 - test QGM with SimulaQron
 ===============================================
 
+NOTE - This code is here for historical reasons, but it does not
+work with current SimulaQron development release.
+
 In this example Alice is the Coordinator and Bob is a remote site. They run the QGM protocol.
 
 First, you need to install SimulaQron - the version under development, which has qubit transmission timouts. 
