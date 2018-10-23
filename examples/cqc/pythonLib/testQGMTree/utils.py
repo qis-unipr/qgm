@@ -5,7 +5,7 @@ from SimulaQron.cqc.pythonLib.cqc import *
 
 ##############################
 #
-# Performs nonestructive discrimination of Bell state of qubits (qA,qB).
+# Performs nondestructive discrimination of Bell state of qubits (qA,qB).
 # By measuring the ancilla qubits (aq1,aq2) in the computational basis,
 # we obtain: 
 # (0,0) for |phi+>

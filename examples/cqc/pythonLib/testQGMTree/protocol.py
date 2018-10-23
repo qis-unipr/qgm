@@ -76,8 +76,9 @@ def childStep2(node, sender, regVLocal, regB, regBA, d, indexes):
 			regB[sender][i].X()
 			node.sendQubit(regB[sender][i], sender)	
 			indexes.append(i)
-		else:	
-			print("send nothing")
+		else:
+			to_print = "App node {}: send nothing to: {}".format(node.name, sender)
+			print(to_print)
 		time.sleep(2)	
 		i = i+1	
 
@@ -89,17 +90,17 @@ def childStep2(node, sender, regVLocal, regB, regBA, d, indexes):
 def parentStep2(node, sender, regAB, d, indexes):
 	to_print = "## 2 ## Parent {}: performing STEP2 with {}".format(node.name, sender)
 	print(to_print)
-	print(len(regAB[sender]))
+	#print("Parent Step 2 - regAB size: " + str(len(regAB[sender])))
 	# get changed qubits from child 
 	i = 0
 	while  i < d/2:
-		print(i)
+		#print(i)
 		try:
 			regAB[sender][i] = node.recvQubit()
 			indexes.append(i)
-			print("Parent received a qubit")
+			print("Parent {} received a qubit from {}".format(node.name, sender))
 		except CQCTimeoutError:
-			print("Parent did not receive a qubit")	
+			print("Parent {} did not receive a qubit from {}".format(node.name, sender))
 		time.sleep(2)		
 		i = i+1	
 	#print(len(indexes))	
@@ -117,6 +118,11 @@ def childStep3(node, sender, regB, regBA, d, indexes):
 		if (i in indexes):
 			to_print = "App {}: i in indexes: {}".format(node.name,i)
 			print(to_print)
+			try:
+				regB[sender][i].measure() # cleaning
+				regBA[sender][i].measure() # cleaning
+			except QubitNotActiveError:
+				pass
 			try:
 				regB[sender][i] = node.recvEPR()
 				to_print = "App {} received his half of the {}-th Bell pair".format(node.name,i)
@@ -218,8 +224,8 @@ def childStep4(node, sender, regVGlobal, regB, regBA, d):
 		except QubitNotActiveError:
 			pass			
 		i = i+1	
-	print(len(regB[sender]))
-	print(len(regBA[sender])	)
+	#print(len(regB[sender]))
+	#print(len(regBA[sender]))
 	i = 0
 	while  i < d/2:			
 		regB[sender][i] = node.createEPR(sender)
@@ -244,8 +250,8 @@ def parentStep4(node, sender, regA, regAB, d):
 		except QubitNotActiveError:
 			pass			
 		i = i+1		
-	print(len(regA[sender]))
-	print(len(regAB[sender]))		
+	#print(len(regA[sender]))
+	#print(len(regAB[sender]))		
 	i = 0
 	while i < d/2:
 		try:
