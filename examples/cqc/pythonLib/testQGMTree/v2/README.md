@@ -1,8 +1,7 @@
-# Quantum Geometric Monitoring (QGM)
-
-Implementation and testing of the QGM-Tree protocol with [SimulaQron](http://www.simulaqron.org/).
+## Version v2
 
 In this version each node can suffer a local violation and each sub-tree maintains its own sub-global state without communicating it to the upper or lower nodes.
+Unlike the main version, no log files are created here.
 
 ## Instructions
 
