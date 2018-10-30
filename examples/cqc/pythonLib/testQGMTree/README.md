@@ -5,8 +5,15 @@ Implementation and testing of the QGM-Tree protocol with [SimulaQron](http://www
 ## Getting Started
 
 In this example we have N nodes forming a binary tree.
-The root of the tree is node0, which can only play the role of the coordinator.
+The root of the tree is named 'node0', which can only play the role of the coordinator.
 Every other node can play both the role of coordinator and producer.
+
+Only leaf nodes (i.e. nodes without child nodes) can suffer a local violation.
+Each sub-tree maintains its own global sub-status that communicates to the upper parent node only if it exceeds a pre-set threshold.
+
+When a leaf node suffers a local violation, it communicates it to the parent node, which acquires the status of the other brother node.
+Subsequently, it averages the two states and checks whether the threshold has been exceeded.
+If the threshold has been exceeded, this procedure is repeated in the upper level sub-tree.
 
 *Note: the current version has been tested with a maximum of 7 nodes.*
 
@@ -23,7 +30,7 @@ Every other node can play both the role of coordinator and producer.
 
 ### Installing
 
-1. Clone the testQGMTree folder in: *SimulaQron/examples/cdc/pythonLib/testQGMTree*.
+1. Clone the testQGMTree folder in: *SimulaQron/examples/cdc/pythonLib*.
 
 2. Enter in: *SimulaQron/config* and edit the following files:
    - *appNodes.cfg*
@@ -67,7 +74,23 @@ If you want to set up a different network of nodes you can change some parameter
 * In the *run.sh* file you can change the number of nodes, and specify for each node its name and the probability that it will suffer a local violation.
   Note: if you change the number of nodes you also need to update the value of the 'n' variable in the main function of the *qgmnode.py* file.
 * In the *qgmnode.py* file you can change the value of the variable 'd' where d/2 represents the number of qubits used by each node.
+* In the *qgmnode.py* file you can change the value of the variable 't' if you want to change the threshold value.
+
+### Logging
+
+For each node a log file is created in the *log* folder.
+For the normal nodes a row is written to the log file each time the node exceeds the threshold.
+Every row shows a timestamp followed by how many qubits the node has sent/received from the previous exceeding of the threshold.
+For leaf nodes instead, a row is written to the log file each time the node suffered a local violation.
+Each row reports a timestamp followed by the number of qubits sent/received from the last local violation that the node suffered.
+
+In the main folder there is a script called *qubitCounter.py* which uses the log files to calculate the total qubits exchanged between each threshold overrun by the root node.
+
+You can run this script by simply typing:
+```
+python qubitCounter.py
+```
 
 ## License
 
-Please refer to the [LICENSE.txt](https://github.com/qis-unipr/QuantumNetworking/blob/master/LICENSE.txt) file for details.
+Please refer to the [LICENSE](https://github.com/qis-unipr/QuantumNetworking/blob/master/LICENSE) file for details.

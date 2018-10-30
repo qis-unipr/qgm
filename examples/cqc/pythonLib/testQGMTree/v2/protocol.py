@@ -54,7 +54,7 @@ def parentStep1(node, sender, regA, regAB, d):
 #
 #  Child Step 2
 #
-def childStep2(node, sender, regVLocal, regB, regBA, d, indexes, excQubits):
+def childStep2(node, sender, regVLocal, regB, regBA, d, indexes):
 	to_print = "## 2 ## Child {}: performing STEP2 with {}".format(node.name, sender)
 	print(to_print)
 	time.sleep(0.5)
@@ -65,20 +65,17 @@ def childStep2(node, sender, regVLocal, regB, regBA, d, indexes, excQubits):
 			regB[sender][i].X()
 			node.sendQubit(regB[sender][i], sender)
 			indexes.append(i)
-			excQubits['sent'] += 1
 		elif ((regVLocal[i*2] == 1) and (regVLocal[i*2+1] == 0)):
 			# turn Beta00 to Beta10
 			regB[sender][i].Z()
 			node.sendQubit(regB[sender][i], sender) 	
 			indexes.append(i)
-			excQubits['sent'] += 1
 		elif ((regVLocal[i*2] == 1) and (regVLocal[i*2+1] == 1)):
 			# turn Beta00 to Beta11
 			regB[sender][i].Z()
 			regB[sender][i].X()
 			node.sendQubit(regB[sender][i], sender)	
 			indexes.append(i)
-			excQubits['sent'] += 1
 		else:
 			to_print = "App node {}: send nothing to: {}".format(node.name, sender)
 			print(to_print)
@@ -90,7 +87,7 @@ def childStep2(node, sender, regVLocal, regB, regBA, d, indexes, excQubits):
 #
 #  Parent Step 2
 #
-def parentStep2(node, sender, regAB, d, indexes, excQubits):
+def parentStep2(node, sender, regAB, d, indexes):
 	to_print = "## 2 ## Parent {}: performing STEP2 with {}".format(node.name, sender)
 	print(to_print)
 	#print("Parent Step 2 - regAB size: " + str(len(regAB[sender])))
@@ -101,7 +98,6 @@ def parentStep2(node, sender, regAB, d, indexes, excQubits):
 		try:
 			regAB[sender][i] = node.recvQubit()
 			indexes.append(i)
-			excQubits['received'] += 1
 			print("Parent {} received a qubit from {}".format(node.name, sender))
 		except CQCTimeoutError:
 			print("Parent {} did not receive a qubit from {}".format(node.name, sender))
@@ -113,7 +109,7 @@ def parentStep2(node, sender, regAB, d, indexes, excQubits):
 #
 #  Child Step 3
 #
-def childStep3(node, sender, regB, regBA, d, indexes, excQubits):
+def childStep3(node, sender, regB, regBA, d, indexes):
 	to_print = "## 3 ## Child {}: performing STEP3 with {}".format(node.name, sender)
 	print(to_print)
 	# receive all the updated Bell pairs from parent
@@ -129,7 +125,6 @@ def childStep3(node, sender, regB, regBA, d, indexes, excQubits):
 				pass
 			try:
 				regB[sender][i] = node.recvEPR()
-				excQubits['received'] += 1
 				to_print = "App {} received his half of the {}-th Bell pair".format(node.name,i)
 				print(to_print)
 			except CQCTimeoutError:
@@ -137,8 +132,7 @@ def childStep3(node, sender, regB, regBA, d, indexes, excQubits):
 				print(to_print)		
 			time.sleep(2)						
 			try:
-				regBA[sender][i] = node.recvQubit()
-				excQubits['received'] += 1
+				regBA[sender][i]=node.recvQubit()
 				to_print = "App {} received parent's half of the {}-th Bell pair".format(node.name,i)
 				print(to_print)
 			except CQCTimeoutError:
@@ -149,8 +143,7 @@ def childStep3(node, sender, regB, regBA, d, indexes, excQubits):
 			to_print = "App {}: i not in indexes: {}".format(node.name,i)
 			print(to_print)
 			try:
-				regBA[sender][i] = node.recvQubit()
-				excQubits['received'] += 1
+				regBA[sender][i]=node.recvQubit()
 				to_print = "App {} received regBA[{}]".format(node.name,i)
 				print(to_print)
 			except CQCTimeoutError:
@@ -164,7 +157,7 @@ def childStep3(node, sender, regB, regBA, d, indexes, excQubits):
 #
 #  Parent Step 3
 #
-def parentStep3(node, sender, regVGlobal, regA, regAB, d, indexes, excQubits):
+def parentStep3(node, sender, regVGlobal, regA, regAB, d, indexes):
 			
 	# update the shared Bell pairs (only those that must change) and send them to the child
 	time.sleep(0.5)
@@ -181,7 +174,6 @@ def parentStep3(node, sender, regVGlobal, regA, regAB, d, indexes, excQubits):
 			except QubitNotActiveError:
 				pass	
 			regA[sender][i] = node.createEPR(sender)
-			excQubits['sent'] += 1
 			time.sleep(2)
 		# apply gates to regA[i] depending on wanted new state
 		if ((regVGlobal[i*2] == 0) and (regVGlobal[i*2+1] == 1)):
@@ -196,7 +188,6 @@ def parentStep3(node, sender, regVGlobal, regA, regAB, d, indexes, excQubits):
 			regA[sender][i].Z()	
 		# send parent's qubit to child
 		node.sendQubit(regA[sender][i], sender)
-		excQubits['sent'] += 1
 		i = i+1	
 		time.sleep(2)
 
@@ -205,7 +196,7 @@ def parentStep3(node, sender, regVGlobal, regA, regAB, d, indexes, excQubits):
 #
 #  Child Step 4
 #
-def childStep4(node, sender, regVGlobal, regB, regBA, d, excQubits):
+def childStep4(node, sender, regVGlobal, regB, regBA, d):
 	to_print = "## 4 ## Child {}: performing STEP4 with {}".format(node.name, sender)
 	print(to_print)
 	# update regVGlobal[]
@@ -238,7 +229,6 @@ def childStep4(node, sender, regVGlobal, regB, regBA, d, excQubits):
 	i = 0
 	while  i < d/2:			
 		regB[sender][i] = node.createEPR(sender)
-		excQubits['sent'] += 1
 		regBA[sender][i] = qubit(node)
 		i = i+1
 	
@@ -247,7 +237,7 @@ def childStep4(node, sender, regVGlobal, regB, regBA, d, excQubits):
 #
 #  Parent Step 4
 #
-def parentStep4(node, sender, regA, regAB, d, excQubits):
+def parentStep4(node, sender, regA, regAB, d):
 	to_print = "## 4 ## Parent {}: performing STEP4 with {}".format(node.name, sender)
 	print(to_print)
 	time.sleep(2)
@@ -266,7 +256,6 @@ def parentStep4(node, sender, regA, regAB, d, excQubits):
 	while i < d/2:
 		try:
 			regA[sender][i] = node.recvEPR()
-			excQubits['received'] += 1
 			to_print = "App {} received its half of the {}-th Bell pair".format(node.name,i)
 			print(to_print)
 			regAB[sender][i] = qubit(node)
