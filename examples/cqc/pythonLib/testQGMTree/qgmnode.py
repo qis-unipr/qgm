@@ -154,7 +154,7 @@ class QGMNode():
 		# If it has child nodes, send a classic message to the left child node to tell it to start STEP1
 		if (self.myid*2+2 < self.n):
 			self.state[self.identifiers['leftChild']] = 'STEP1'
-			parentStep1(self.node, self.identifiers['leftChild'], self.regA, self.regAB, self.d)
+			parentStep1(self.node, self.identifiers['leftChild'], self.regA, self.regAB, self.d, self.excQubits)
 			self.state[self.identifiers['leftChild']] = 'WAIT'
 			self.node.sendClassical(self.identifiers['leftChild'], str.encode(self.myself+":start_step1"))
 			# Wait until STEP1 finishes with the left child node
@@ -164,7 +164,7 @@ class QGMNode():
 					waitLoop = False
 			# STEP1 start with the right child node
 			self.state[self.identifiers['rightChild']] = 'STEP1'
-			parentStep1(self.node, self.identifiers['rightChild'], self.regA, self.regAB, self.d)
+			parentStep1(self.node, self.identifiers['rightChild'], self.regA, self.regAB, self.d, self.excQubits)
 			self.state[self.identifiers['rightChild']] = 'WAIT'
 			self.node.sendClassical(self.identifiers['rightChild'], str.encode(self.myself+":start_step1"))
 			# Wait until STEP1 finishes with the right child node
@@ -295,7 +295,7 @@ class QGMNode():
 		if (self.myid == 0):
 			# Left child node
 			self.state[self.identifiers['leftChild']] = 'STEP1'
-			parentStep1(self.node, self.identifiers['leftChild'], self.regA, self.regAB, self.d)
+			parentStep1(self.node, self.identifiers['leftChild'], self.regA, self.regAB, self.d, self.excQubits)
 			self.state[self.identifiers['leftChild']] = 'WAIT'
 			self.node.sendClassical(self.identifiers['leftChild'], str.encode(self.myself+":start_step1"))
 			data = self.node.recvClassical()
@@ -306,7 +306,7 @@ class QGMNode():
 			print(to_print)
 			# Right child node
 			self.state[self.identifiers['rightChild']] = 'STEP1'
-			parentStep1(self.node, self.identifiers['rightChild'], self.regA, self.regAB, self.d)
+			parentStep1(self.node, self.identifiers['rightChild'], self.regA, self.regAB, self.d, self.excQubits)
 			self.state[self.identifiers['rightChild']] = 'WAIT'
 			self.node.sendClassical(self.identifiers['rightChild'], str.encode(self.myself+":start_step1"))
 			# Wait to receive the response from the right child node
@@ -420,8 +420,8 @@ class QGMNode():
 		### Actions as child node ###
 		if (sender == self.identifiers['parent']):
 			if (self.state[sender] == 'STEP1'):
-				childStep1(self.node, self.identifiers['parent'], reg1, reg2, self.d)
-				self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":end_step1"))
+				childStep1(self.node, sender, reg1, reg2, self.d, self.excQubits)
+				self.node.sendClassical(sender, str.encode(self.myself+":end_step1"))
 				# Wait for the parent node to know that it has finished STEP1 with all its child nodes
 				waitLoop = True
 				while waitLoop:
@@ -437,11 +437,11 @@ class QGMNode():
 			elif (self.state[sender] == 'WAIT'):	
 				# Update the Bell pairs and send changed qubits to parent
 				self.state[sender] = 'STEP2'
-				del self.indexes[self.identifiers['parent']][:] # perform some cleaning
-				childStep2(self.node, self.identifiers['parent'], self.regVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
+				del self.indexes[sender][:] # perform some cleaning
+				childStep2(self.node, sender, self.regVLocal, reg1, reg2, self.d, self.indexes[sender], self.excQubits)
 			elif (self.state[sender] == 'STEP2'):
 				self.state[sender] = 'STEP3'
-				childStep3(self.node, sender, reg1, reg2, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
+				childStep3(self.node, sender, reg1, reg2, self.d, self.indexes[sender], self.excQubits)
 				self.state[sender] = 'STEP4'
 				childStep4(self.node, sender, self.regVGlobal, reg1, reg2, self.d, self.excQubits)	
 			elif (self.state[sender] == 'STEP4'):
