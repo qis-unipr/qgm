@@ -62,12 +62,7 @@ def childStep2(node, sender, regVLocal, regB, regBA, d, indexes, excQubits):
 	time.sleep(0.5)
 	i = 0
 	while  i < d/2:
-		if ((regVLocal[i*2] == 0) and (regVLocal[i*2+1] == 0)):
-			# send Beta00 directly
-			node.sendQubit(regB[sender][i], sender)
-			indexes.append(i)
-			excQubits['sent'] += 1
-		elif ((regVLocal[i*2] == 0) and (regVLocal[i*2+1] == 1)):
+		if ((regVLocal[i*2] == 0) and (regVLocal[i*2+1] == 1)):
 			# turn Beta00 to Beta01
 			regB[sender][i].X()
 			node.sendQubit(regB[sender][i], sender)

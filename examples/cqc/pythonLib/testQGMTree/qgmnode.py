@@ -491,30 +491,34 @@ class QGMNode():
 				print(to_print)	
 				# Perform Bell state discrimination by nondestructive measurement 
 				# on the local Bell pairs (whose indexes have been saved)
-				print("Indexes size: {}".format(len(self.indexes[sender])))
+				print("Sender indexes size: {}".format(len(self.indexes[sender])))
+				print("OtherChild indexes size: {}".format(len(self.indexes[otherChild])))
 				regSender = bitarray(self.d)
 				regOtherChild = bitarray(self.d)
 				i = 0
+				while i < self.d:	
+					regSender[i] = 0
+					regOtherChild[i] = 0
+					i = i+1
+				i = 0
 				while i < (self.d)/2:
-					# Measure the qubits of the child node that had the local violation
-					aq1_sender = qubit(self.node)
-					aq2_sender = qubit(self.node)
-					nondestructiveBellStateDiscrimination(reg1[sender][i], reg2[sender][i], aq1_sender, aq2_sender)
-					b1_sender = aq1_sender.measure()
-					b2_sender = aq2_sender.measure()
-					regSender[i*2] = b1_sender
-					regSender[i*2+1] = b2_sender
-					# Measure the qubits of the other child node
-					aq1_otherChild = qubit(self.node)
-					aq2_otherChild = qubit(self.node)
-					nondestructiveBellStateDiscrimination(reg1[otherChild][i], reg2[otherChild][i], aq1_otherChild, aq2_otherChild)
-					b1_otherChild = aq1_otherChild.measure()
-					b2_otherChild = aq2_otherChild.measure()
-					regOtherChild[i*2] = b1_otherChild
-					regOtherChild[i*2+1] = b2_otherChild
-					to_print = "App {}: nbsd of {} --> i, b1, b2: {}, {}, {}".format(self.node.name,sender,i,b1_sender,b2_sender)
+					if (i in self.indexes[sender]):
+						# Measure the qubits of the child node that had the local violation
+						aq1_sender = qubit(self.node)
+						aq2_sender = qubit(self.node)
+						nondestructiveBellStateDiscrimination(reg1[sender][i], reg2[sender][i], aq1_sender, aq2_sender)
+						regSender[i*2] = aq1_sender.measure()
+						regSender[i*2+1] = aq2_sender.measure()
+					if (i in self.indexes[otherChild]):
+						# Measure the qubits of the other child node
+						aq1_otherChild = qubit(self.node)
+						aq2_otherChild = qubit(self.node)
+						nondestructiveBellStateDiscrimination(reg1[otherChild][i], reg2[otherChild][i], aq1_otherChild, aq2_otherChild)
+						regOtherChild[i*2] = aq1_otherChild.measure()
+						regOtherChild[i*2+1] = aq2_otherChild.measure()
+					to_print = "App {}: nbsd of {} --> i, b1, b2: {}, {}, {}".format(self.node.name, sender, i, int(regSender[i*2]), int(regSender[i*2+1]))
 					print(to_print)
-					to_print = "App {}: nbsd of {} --> i, b1, b2: {}, {}, {}".format(self.node.name,otherChild,i,b1_otherChild,b2_otherChild)
+					to_print = "App {}: nbsd of {} --> i, b1, b2: {}, {}, {}".format(self.node.name, otherChild, i, int(regOtherChild[i*2]), int(regOtherChild[i*2+1]))
 					print(to_print)
 					i = i+1
 				# Calculate the new global state from the average of the local states of the two child nodes
