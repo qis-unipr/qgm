@@ -257,22 +257,23 @@ class QGMNode():
 						# If the parent node is not free retry after 6 seconds, otherwise proceed
 						waitLoop = True
 						while waitLoop:
-							if (self.notifyFlag):
+							if (self.notifyFlag == 1 or self.pendingViolation == 0):
 								waitLoop = False
 							else:
 								time.sleep(6)
-								if (self.notifyFlag == 0):
+								if (self.notifyFlag == 0 and self.pendingViolation == 1):
 									self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":free_parent_req"))
-						self.notifyFlag = 0
-						to_print = "## PROC ## Child {}: threshold exceeded synchronization with the parent: {}".format(self.node.name, self.regVLocal)
-						print(to_print)
-						# Notify the parent node of the local violation by sending it a classic message
-						self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":child_violation"))
-						# Update the Bell pair and sends the modified qubits to the parent node starting the protocol STEP2
-						self.state[self.identifiers['parent']] = 'STEP2'					
-						del self.indexes[self.identifiers['parent']][:] # perform some cleaning
-						childStep2(self.node, self.identifiers['parent'], self.regVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
-						self.pendingViolation = 0
+						if (self.notifyFlag):
+							self.notifyFlag = 0
+							to_print = "## PROC ## Child {}: threshold exceeded synchronization with the parent: {}".format(self.node.name, self.regVLocal)
+							print(to_print)
+							# Notify the parent node of the local violation by sending it a classic message
+							self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":child_violation"))
+							# Update the Bell pair and sends the modified qubits to the parent node starting the protocol STEP2
+							self.state[self.identifiers['parent']] = 'STEP2'					
+							del self.indexes[self.identifiers['parent']][:] # perform some cleaning
+							childStep2(self.node, self.identifiers['parent'], self.regVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
+							self.pendingViolation = 0
 			# If the node status is not in PROC, wait until it returns in that state
 			elif (self.state[self.identifiers['parent']] != 'PROC'):
 				wt = 10
@@ -354,11 +355,7 @@ class QGMNode():
 					self.node.sendClassical(otherChild, str.encode(self.myself+":free_child_req"))
 			elif (msg == "free_child_req"):
 				if (self.busy == 1 and self.pendingViolation == 0):
-					if (self.otherChildPending):
-						self.node.sendClassical(sender, str.encode(self.myself+":child_is_free"))
-						self.otherChildPending = 0
-					else:
-						self.node.sendClassical(sender, str.encode(self.myself+":child_not_free"))
+					self.node.sendClassical(sender, str.encode(self.myself+":child_not_free"))
 				elif (self.busy == 1 and self.pendingViolation == 1):
 					self.node.sendClassical(sender, str.encode(self.myself+":child_not_free_in_pending"))
 				else:
@@ -386,6 +383,11 @@ class QGMNode():
 			elif (msg == "parent_is_free_in_pending"):
 				self.otherChildPending = 1
 				self.notifyFlag = 1
+			elif (msg == "release_otherChild"):
+				self.node.sendClassical(otherChild, str.encode(self.myself+":release"))
+			elif (msg == "release"):
+				self.busy = 0
+				self.pendingViolation = 0
 			elif (msg == "only_parent_free"):
 				if (self.busy):
 					self.node.sendClassical(sender, str.encode(self.myself+":parent_only_not_free"))
@@ -456,7 +458,10 @@ class QGMNode():
 						file.write(str(datetime.datetime.now())+"_"+self.node.name+"_LV_S:"+str(self.excQubits['sent'])+"_R:"+str(self.excQubits['received'])+"\n")
 						self.excQubits['sent'] = 0
 						self.excQubits['received'] = 0
-				if (self.pendingViolation == 0 and self.otherChildPending == 0):
+				if (self.otherChildPending):
+					self.node.sendClassical(sender, str.encode(self.myself+":release_otherChild"))
+					self.otherChildPending = 0
+				if (self.pendingViolation == 0):
 					self.busy = 0
 				self.state[sender] = 'PROC'
 				
@@ -611,7 +616,7 @@ def main():
 	# Number of nodes
 	n = 7
 	# Threshold
-	t = '1000'
+	t = '0110'
 	qgmnode = QGMNode(myid, d, p, n, t)
 	print(qgmnode.identifiers)
 		
