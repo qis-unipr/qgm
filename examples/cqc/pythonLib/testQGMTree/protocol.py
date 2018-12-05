@@ -23,7 +23,7 @@ def childStep1(node, sender, regB, regBA, d, excQubits):
 	while i < d/2:
 		try:	
 			regB[sender].append(node.recvEPR())
-			excQubits['received'] += 1
+			#excQubits['received'] += 1
 			regBA[sender].append(qubit(node)) # this is a code trick to make the second register grow like the first one
 		except CQCTimeoutError:
 			print("Child did not receive half EPR")	
@@ -44,7 +44,7 @@ def parentStep1(node, sender, regA, regAB, d, excQubits):
 	i = 0
 	while i < d/2:
 		regA[sender].append(node.createEPR(sender))
-		excQubits['sent'] += 1
+		#excQubits['sent'] += 1
 		regAB[sender].append(qubit(node)) # this is a code trick to make the second register grow like the first one
 		time.sleep(2)	
 		i = i+1

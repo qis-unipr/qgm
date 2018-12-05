@@ -39,15 +39,15 @@ If the threshold has been exceeded, this procedure is repeated in the upper leve
 
    in order to set the number of virtual nodes and CQC servers (node0, node1, node2, ...).
    
-   In the same folder edit the *settings.ini* file in order to set:
+   In the same folder edit the *settings.ini* file in order to set the maximum number of qubits per node. For example:
    ```
-   maxqubits_per_node = 100
+   maxqubits_per_node = 1000
    ```
 
 3. Enter in: *SimulaQron/cqc/backend* and edit the *cqcConfig.py* file in order to set:
    ```
-   CQC_CONF_RECV_TIMEOUT=25 # (x 100ms)
-   CQC_CONF_RECV_EPR_TIMEOUT=25 # (x 100ms)
+   CQC_CONF_RECV_TIMEOUT=20 # (x 100ms)
+   CQC_CONF_RECV_EPR_TIMEOUT=20 # (x 100ms)
    ```
 
 4. Move the *myStarter.sh* file to *SimulaQron/run*.
@@ -75,19 +75,21 @@ If you want to set up a different network of nodes you can change some parameter
   Note: if you change the number of nodes you also need to update the value of the 'n' variable in the main function of the *qgmnode.py* file.
 * In the *qgmnode.py* file you can change the value of the variable 'd' where d/2 represents the number of qubits used by each node.
 * In the *qgmnode.py* file you can change the value of the variable 't' if you want to change the threshold value.
+* In the *qgmnode.py* file you can change the value of the variable 'l' if you want to change the maximum number of threshold violations by the root node.
 
 ### Logging
 
-For each node a log file is created in the *log* folder.
-For the normal nodes a row is written to the log file each time the node exceeds the threshold.
-Every row shows a timestamp followed by how many qubits the node has sent/received from the previous exceeding of the threshold.
-For leaf nodes instead, a row is written to the log file each time the node suffered a local violation.
-Each row reports a timestamp followed by the number of qubits sent/received from the last local violation that the node suffered.
+For each node a log file is created in the *log* folder and in the *log2* folder.
 
-In the main folder there is a script called *qubitCounter.py* which uses the log files to calculate the total qubits exchanged between each threshold overrun by the root node.
+In the main folder there are two scripts:
+- *localStatesAvg.py*: which uses the log files contained in the *log* folder to calculate the percentage error between the root node state and the local state average of all other nodes of the binary tree.
+	The output is contained in the *results.txt* file
+- *qubitCounter.py*: which uses the log files contained in the *log2* folder to calculate the total qubits exchanged between each threshold overrun by the root node.
+	The output is contained in the *results2.txt* file
 
-You can run this script by simply typing:
+You can run these scripts by simply typing:
 ```
+python localStatesAvg.py
 python qubitCounter.py
 ```
 

@@ -3,6 +3,7 @@ from bitarray import bitarray
 from random import *
 from time import sleep
 from threading import Thread
+from subprocess import call
 import sys, os, re, datetime
 
 from SimulaQron.general.hostConfig import *
@@ -20,13 +21,14 @@ from utils import *
 
 class QGMNode():
 
-	def __init__(self, myid, d, p, n, t):
+	def __init__(self, myid, d, p, n, t, l):
 		self.myid = myid
 		self.myself = 'node'+str(myid)
 		self.d = d
 		self.p = p
 		self.n = n
 		self.t = t
+		self.l = l
 		self.indexes = {}
 		
 		# Number of child nodes that responded to having finished STEP1
@@ -49,6 +51,8 @@ class QGMNode():
 		self.parentAnsw = 0
 		# Flag to determine if the other node is waiting because it gave precedence to the current node
 		self.otherChildPending = 0
+		# Flag to determine the number of times the root node has exceeded the threshold
+		self.overrunNumber = 0
 		
 		# Bit registers for local state and global state
 		self.regVLocal = bitarray(d)
@@ -74,9 +78,11 @@ class QGMNode():
 			self.state[self.identifiers['parent']] = 'READY'
 		else:
 			self.identifiers['parent'] = 'null'
-			# Check if the log folder exists, otherwise it creates it
+			# Check if the log and log2 folders exists, otherwise it creates it
 			if not os.path.exists("log"):
 				os.makedirs("log")
+			if not os.path.exists("log2"):
+				os.makedirs("log2")
 		
 		# Set the name of the two child nodes if they exist, otherwise they are set to null
 		if (myid*2+1 < n):
@@ -186,8 +192,8 @@ class QGMNode():
 			# and finally randomly changes some bits of the local state register
 			if (self.state[self.identifiers['parent']] == 'PROC'):
 				if (self.pendingViolation == 0):
-					wt = random()*60
-					time.sleep(wt)
+					#wt = random()*60
+					time.sleep(50)
 				else:
 					time.sleep(3)
 				if (self.state[self.identifiers['parent']] == 'PROC'):	 # re-check
@@ -197,18 +203,24 @@ class QGMNode():
 						# Scroll every bit of the register and changes it only if the random value is less than the value of p
 						i = 0
 						flag = 0
-						while i < self.d:
+						oldRegVLocal = self.regVLocal.to01()
+						while i < self.d/2:
 							r = random()
 							if r < self.p:
-								if self.regVLocal[i] == 1:
-									self.regVLocal[i] = 0
-								elif self.regVLocal[i] == 0:
-									self.regVLocal[i] = 1
-								flag = 1
-							i = i+1	
+								self.regVLocal[i*2] = getrandbits(1)
+								self.regVLocal[i*2+1] = getrandbits(1)
+							i = i+1
+						if not (oldRegVLocal == self.regVLocal.to01()):
+							flag = 1
 
 						# If at least one bit has changed it means that there has been a local violation
 						if flag == 1:
+							# Update log file with the new regVLocal value
+							append_write = 'w'
+							if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
+								append_write = 'a' # append if already exists
+							with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
+								file.write(str(datetime.datetime.now())+"_"+self.regVLocal.to01()+"\n")
 							self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":only_parent_free"))
 							waitLoop = True
 							while waitLoop:
@@ -452,12 +464,22 @@ class QGMNode():
 				if (self.leafNode):
 					# Update log file and reset the counter of the qubits exchanged only for the leaf nodes
 					append_write = 'w'
-					if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
+					if (os.path.isfile(os.path.join('log2', self.node.name+'.txt'))):
 						append_write = 'a' # append if already exists
-					with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
+					with open(os.path.join('log2', self.node.name+'.txt'), append_write) as file:
 						file.write(str(datetime.datetime.now())+"_"+self.node.name+"_LV_S:"+str(self.excQubits['sent'])+"_R:"+str(self.excQubits['received'])+"\n")
-						self.excQubits['sent'] = 0
-						self.excQubits['received'] = 0
+					self.excQubits['sent'] = 0
+					self.excQubits['received'] = 0
+				else:
+					# Update log file and reset the counter of the qubits exchanged only for non-leaf nodes
+					append_write = 'w'
+					if (os.path.isfile(os.path.join('log2', self.node.name+'.txt'))):
+						append_write = 'a' # append if already exists
+					with open(os.path.join('log2', self.node.name+'.txt'), append_write) as file:
+						file.write(str(datetime.datetime.now())+"_"+self.node.name+"_G"+str(self.myid*2+1)+str(self.myid*2+2)
+								   +"_S:"+str(self.excQubits['sent'])+"_R:"+str(self.excQubits['received'])+"\n")
+					self.excQubits['sent'] = 0
+					self.excQubits['received'] = 0
 				if (self.otherChildPending):
 					self.node.sendClassical(sender, str.encode(self.myself+":release_otherChild"))
 					self.otherChildPending = 0
@@ -535,6 +557,13 @@ class QGMNode():
 					self.regVGlobal[i] = avgBitLocalStatesList[i]
 					self.regVLocal[i] = avgBitLocalStatesList[i]
 					i = i+1
+				if (self.myid != 0):
+					# Update log file with the new regVLocal value
+					append_write = 'w'
+					if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
+						append_write = 'a' # append if already exists
+					with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
+						file.write(str(datetime.datetime.now())+"_"+self.regVLocal.to01()+"\n")
 				# Print the new v(t) 
 				print("New regVGlobal of {}: {}".format(self.node.name, self.regVGlobal))
 				print("New regVLocal of {}: {}".format(self.node.name, self.regVLocal))
@@ -556,36 +585,41 @@ class QGMNode():
 				parentStep3(self.node, otherChild, self.regVGlobal, reg1, reg2, self.d, self.indexes[otherChild], self.excQubits)
 				self.state[otherChild] = 'STEP4'
 				parentStep4(self.node, otherChild, reg1, reg2, self.d, self.excQubits)
-				self.state[otherChild] = 'WAIT'				
+				self.state[otherChild] = 'WAIT'
 				
 				# Check if the threshold has been exceeded
 				if (int(self.regVGlobal.to01(),2) > int(self.t,2)):
-					if (self.myid == 0):
-						print("*** G12 in the root node has exceeded the threshold: timestamp saved. ***")
-						# Update log file and reset the counter of the qubits exchanged
-						append_write = 'w'
-						if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
-							append_write = 'a' # append if already exists
-						with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
-							file.write(str(datetime.datetime.now())+"_"+self.node.name+"_G12"
-									   +"_S:"+str(self.excQubits['sent'])+"_R:"+str(self.excQubits['received'])+"\n")
-							self.excQubits['sent'] = 0
-							self.excQubits['received'] = 0
-					else:
-						print("Parent {}: threshold has been exceeded.".format(self.node.name))
-						# Update log file and reset the counter of the qubits exchanged
-						append_write = 'w'
-						if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
-							append_write = 'a' # append if already exists
-						with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
-							file.write(str(datetime.datetime.now())+"_"+self.node.name+"_G"+str(self.myid*2+1)+str(self.myid*2+2)
-									   +"_S:"+str(self.excQubits['sent'])+"_R:"+str(self.excQubits['received'])+"\n")
-							self.excQubits['sent'] = 0
-							self.excQubits['received'] = 0
-					
 					# Notify the end of the protocol to the child nodes
 					self.node.sendClassical(sender, str.encode(self.node.name+":protocol_terminated"))
 					self.node.sendClassical(otherChild, str.encode(self.node.name+":protocol_terminated"))
+					time.sleep(2)
+					
+					if (self.myid == 0):
+						print("*** G12 in the root node has exceeded the threshold: timestamp saved. ***")
+						# Update log file about the local state
+						append_write = 'w'
+						if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
+							append_write = 'a' # append if already exists
+						with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
+							file.write(str(datetime.datetime.now())+"_"+self.regVLocal.to01()+"\n")
+							
+						# Update log file and reset the counter of the qubits exchanged
+						append_write = 'w'
+						if (os.path.isfile(os.path.join('log2', self.node.name+'.txt'))):
+							append_write = 'a' # append if already exists
+						with open(os.path.join('log2', self.node.name+'.txt'), append_write) as file:
+							file.write(str(datetime.datetime.now())+"_"+self.node.name+"_G"+str(self.myid*2+1)+str(self.myid*2+2)
+									   +"_S:"+str(self.excQubits['sent'])+"_R:"+str(self.excQubits['received'])+"\n")
+						self.excQubits['sent'] = 0
+						self.excQubits['received'] = 0
+						
+						self.overrunNumber += 1
+					else:
+						print("Parent {}: threshold has been exceeded.".format(self.node.name))
+						
+					if (self.overrunNumber == self.l):
+						call(["killall", "python3"])
+					
 					if (self.myid != 0):
 						self.pendingViolation = 1
 					else:
@@ -616,8 +650,10 @@ def main():
 	# Number of nodes
 	n = 7
 	# Threshold
-	t = '0110'
-	qgmnode = QGMNode(myid, d, p, n, t)
+	t = '0101'
+	# Max number of root node threshold violation
+	l = 50
+	qgmnode = QGMNode(myid, d, p, n, t, l)
 	print(qgmnode.identifiers)
 		
 		
