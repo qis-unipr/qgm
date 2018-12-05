@@ -105,9 +105,10 @@ def parentStep2(node, sender, regAB, d, indexes, excQubits):
 			indexes.append(i)
 			excQubits['received'] += 1
 			print("Parent {} received a qubit from {}".format(node.name, sender))
+			time.sleep(2)
 		except CQCTimeoutError:
 			print("Parent {} did not receive a qubit from {}".format(node.name, sender))
-		time.sleep(2)		
+		#time.sleep(2)		
 		i = i+1	
 	#print(len(indexes))	
 

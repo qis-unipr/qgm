@@ -83,9 +83,9 @@ For each node a log file is created in the *log* folder and in the *log2* folder
 
 In the main folder there are two scripts:
 - *localStatesAvg.py*: which uses the log files contained in the *log* folder to calculate the percentage error between the root node state and the local state average of all other nodes of the binary tree.
-	The output is contained in the *results.txt* file
+	The output is contained in the *results.txt* file.
 - *qubitCounter.py*: which uses the log files contained in the *log2* folder to calculate the total qubits exchanged between each threshold overrun by the root node.
-	The output is contained in the *results2.txt* file
+	The output is contained in the *results2.txt* file.
 
 You can run these scripts by simply typing:
 ```
