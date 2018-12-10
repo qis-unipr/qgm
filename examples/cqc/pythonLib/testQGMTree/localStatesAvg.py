@@ -12,7 +12,7 @@ import os, datetime, math
 dir = "log"
 
 # Bit number
-d = 4
+d = 8
 
 def main():
 	# Get the number of files in the directory
@@ -67,7 +67,7 @@ def main():
 		variance = square_sum / (j - 1)
 		std_dev = math.sqrt(variance)
 		marg_err = 1.96 * (std_dev / math.sqrt(j))
-		perc_marg_err = (marg_err / 16) * 100
+		perc_marg_err = (marg_err / statesNumber) * 100
 		
 		f_out.write("\nAverage of all differences = {}".format(round(avg_diff, 2)))
 		f_out.write("\nStandard Deviation = {}".format(round(std_dev, 2)))

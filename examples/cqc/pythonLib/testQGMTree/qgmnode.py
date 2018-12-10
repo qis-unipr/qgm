@@ -30,6 +30,7 @@ class QGMNode():
 		self.t = t
 		self.l = l
 		self.indexes = {}
+		self.indexes2 = {}
 		
 		# Number of child nodes that responded to having finished STEP1
 		self.numChildAnsw = 0
@@ -101,6 +102,10 @@ class QGMNode():
 		self.indexes[self.identifiers['parent']] = []
 		self.indexes[self.identifiers['leftChild']] = []
 		self.indexes[self.identifiers['rightChild']] = []
+		
+		self.indexes2[self.identifiers['parent']] = []
+		self.indexes2[self.identifiers['leftChild']] = []
+		self.indexes2[self.identifiers['rightChild']] = []
 		
 		# Set the two child nodes in the READY state
 		self.state = {}
@@ -193,7 +198,7 @@ class QGMNode():
 			if (self.state[self.identifiers['parent']] == 'PROC'):
 				if (self.pendingViolation == 0):
 					#wt = random()*60
-					time.sleep(50)
+					time.sleep(85)
 				else:
 					time.sleep(3)
 				if (self.state[self.identifiers['parent']] == 'PROC'):	 # re-check
@@ -455,9 +460,12 @@ class QGMNode():
 				childStep2(self.node, sender, self.regVLocal, reg1, reg2, self.d, self.indexes[sender], self.excQubits)
 			elif (self.state[sender] == 'STEP2'):
 				self.state[sender] = 'STEP3'
-				childStep3(self.node, sender, reg1, reg2, self.d, self.indexes[sender], self.excQubits)
+				del self.indexes2[sender][:] # perform some cleaning
+				childStep3(self.node, sender, reg1, reg2, self.d, self.indexes[sender], self.indexes2[sender], self.excQubits)
 				self.state[sender] = 'STEP4'
-				childStep4(self.node, sender, self.regVGlobal, reg1, reg2, self.d, self.excQubits)	
+				childStep4(self.node, sender, self.regVGlobal, reg1, reg2, self.d, self.indexes2[sender], self.excQubits)
+				to_print = "### Child {}: received new global state: {}".format(self.node.name, self.regVGlobal)
+				print(to_print)
 			elif (self.state[sender] == 'STEP4'):
 				to_print = "#### Child {}: end protocol notified by {}".format(self.node.name, sender)
 				print(to_print)
@@ -573,19 +581,22 @@ class QGMNode():
 				# Current child node
 				self.state[sender] = 'STEP3'
 				self.node.sendClassical(sender, str.encode(self.myself+":step3")) # wake up sender to STEP3
-				parentStep3(self.node, sender, self.regVGlobal, reg1, reg2, self.d, self.indexes[sender], self.excQubits)
+				del self.indexes2[sender][:] # perform some cleaning
+				parentStep3(self.node, sender, self.regVGlobal, reg1, reg2, self.d, self.indexes[sender], self.indexes2[sender], self.excQubits)
 				self.state[sender] = 'STEP4'
-				parentStep4(self.node, sender, reg1, reg2, self.d, self.excQubits)
+				parentStep4(self.node, sender, reg1, reg2, self.d, self.indexes2[sender], self.excQubits)
 				self.state[sender] = 'WAIT'
 				time.sleep(2)
 				
 				# Other child node
 				self.state[otherChild] = 'STEP3'
 				self.node.sendClassical(otherChild, str.encode(self.myself+":step3")) # wake up other child to STEP3
-				parentStep3(self.node, otherChild, self.regVGlobal, reg1, reg2, self.d, self.indexes[otherChild], self.excQubits)
+				del self.indexes2[otherChild][:] # perform some cleaning
+				parentStep3(self.node, otherChild, self.regVGlobal, reg1, reg2, self.d, self.indexes[otherChild], self.indexes2[otherChild], self.excQubits)
 				self.state[otherChild] = 'STEP4'
-				parentStep4(self.node, otherChild, reg1, reg2, self.d, self.excQubits)
+				parentStep4(self.node, otherChild, reg1, reg2, self.d, self.indexes2[otherChild], self.excQubits)
 				self.state[otherChild] = 'WAIT'
+				time.sleep(1)
 				
 				# Check if the threshold has been exceeded
 				if (int(self.regVGlobal.to01(),2) > int(self.t,2)):
@@ -646,13 +657,13 @@ def main():
 	# Probability of local violation
 	p = round(float(sys.argv[2]),1)
 	# d value
-	d = 4
+	d = 8
 	# Number of nodes
 	n = 7
 	# Threshold
-	t = '0101'
+	t = '10000000'
 	# Max number of root node threshold violation
-	l = 50
+	l = 20
 	qgmnode = QGMNode(myid, d, p, n, t, l)
 	print(qgmnode.identifiers)
 		
