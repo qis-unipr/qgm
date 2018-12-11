@@ -1,13 +1,13 @@
-#################################################################################
-## Script which count the total of the bits exchanged during the execution     ##
-## of the protocol, between each exceeding of the threshold by the root node.  ##
-##																			   ##
-## It is executed on the log file of each node, contained in the 'log' folder. ##
-#################################################################################
+##################################################################################
+## Script which count the total of the bits exchanged during the execution      ##
+## of the protocol, between each exceeding of the threshold by the root node.   ##
+##																			    ##
+## It is executed on the log file of each node, contained in the 'log2' folder. ##
+##################################################################################
 
 import os, datetime, math
 
-dir = "log"
+dir = "log2"
 
 def main():
 	# Get the number of files in the directory
@@ -17,7 +17,7 @@ def main():
 	
 	precRowDateTime = datetime.datetime.now()
 	
-	with open(os.path.join("", "results.txt"), "w") as f_out:
+	with open(os.path.join("", "results2.txt"), "w") as f_out:
 		with open(os.path.join(dir, "node0.txt"), "r") as node0:
 			i = 0
 			for row in node0:

@@ -71,6 +71,8 @@ class GMNode():
 			# Check if the log folder exists, otherwise it creates it
 			if not os.path.exists("log"):
 				os.makedirs("log")
+			if not os.path.exists("log2"):
+				os.makedirs("log2")
 		
 		# Set the name of the two child nodes if they exist, otherwise they are set to null
 		if (myid*2+1 < n):
@@ -165,6 +167,12 @@ class GMNode():
 
 						# If at least one bit has changed it means that there has been a local violation
 						if flag == 1:
+							# Update log file with the new regVLocal value
+							append_write = 'w'
+							if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
+								append_write = 'a' # append if already exists
+							with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
+								file.write(str(datetime.datetime.now())+"_"+self.regVLocal.to01()+"\n")
 							self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":only_parent_free"))
 							waitLoop = True
 							while waitLoop:
@@ -358,18 +366,18 @@ class GMNode():
 				if (self.leafNode):
 					# Update log file and reset the counter of bits exchanged only for the leaf nodes
 					append_write = 'w'
-					if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
+					if (os.path.isfile(os.path.join('log2', self.node.name+'.txt'))):
 						append_write = 'a' # append if already exists
-					with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
+					with open(os.path.join('log2', self.node.name+'.txt'), append_write) as file:
 						file.write(str(datetime.datetime.now())+"_"+self.node.name+"_LV_S:"+str(self.excBits['sent'])+"_R:"+str(self.excBits['received'])+"\n")
 					self.excBits['sent'] = 0
 					self.excBits['received'] = 0
 				else:
 					# Update log file and reset the counter of the bits exchanged only for non-leaf nodes
 					append_write = 'w'
-					if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
+					if (os.path.isfile(os.path.join('log2', self.node.name+'.txt'))):
 						append_write = 'a' # append if already exists
-					with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
+					with open(os.path.join('log2', self.node.name+'.txt'), append_write) as file:
 						file.write(str(datetime.datetime.now())+"_"+self.node.name+"_G"+str(self.myid*2+1)+str(self.myid*2+2)
 								   +"_S:"+str(self.excBits['sent'])+"_R:"+str(self.excBits['received'])+"\n")
 					self.excBits['sent'] = 0
@@ -435,6 +443,13 @@ class GMNode():
 					self.regVGlobal[i] = avgBitLocalStatesList[i]
 					self.regVLocal[i] = avgBitLocalStatesList[i]
 					i = i+1
+				if (self.myid != 0):
+					# Update log file with the new regVLocal value
+					append_write = 'w'
+					if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
+						append_write = 'a' # append if already exists
+					with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
+						file.write(str(datetime.datetime.now())+"_"+self.regVLocal.to01()+"\n")
 				# Print the new v(t) 
 				print("New regVGlobal of {}: {}".format(self.node.name, self.regVGlobal))
 				print("New regVLocal of {}: {}".format(self.node.name, self.regVLocal))
@@ -450,11 +465,18 @@ class GMNode():
 					
 					if (self.myid == 0):
 						print("*** G12 in the root node has exceeded the threshold: timestamp saved. ***")
-						# Update log file and reset the counter of the qubits exchanged
+						# Update log file about the local state
 						append_write = 'w'
 						if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
 							append_write = 'a' # append if already exists
 						with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
+							file.write(str(datetime.datetime.now())+"_"+self.regVLocal.to01()+"\n")
+						
+						# Update log file and reset the counter of the qubits exchanged
+						append_write = 'w'
+						if (os.path.isfile(os.path.join('log2', self.node.name+'.txt'))):
+							append_write = 'a' # append if already exists
+						with open(os.path.join('log2', self.node.name+'.txt'), append_write) as file:
 							file.write(str(datetime.datetime.now())+"_"+self.node.name+"_G"+str(self.myid*2+1)+str(self.myid*2+2)+"_S:"+
 									   str(self.excBits['sent'])+"_R:"+str(self.excBits['received'])+"\n")
 						self.excBits['sent'] = 0
@@ -500,7 +522,7 @@ def main():
 	# Threshold
 	t = '10000000'
 	# Max number of root node threshold violation
-	l = 5
+	l = 20
 	gmnode = GMNode(myid, d, p, n, t, l)
 	print(gmnode.identifiers)
 		

@@ -44,7 +44,7 @@ If the threshold has been exceeded, this procedure is repeated in the upper leve
 
 2. Open a second shell and execute:
    ```
-   cd examples/cqc/pythonLib/testQGMTree
+   cd examples/cqc/pythonLib/testGMTree
    sh run.sh
    ```
 
@@ -60,16 +60,17 @@ If you want to set up a different network of nodes you can change some parameter
 
 ### Logging
 
-For each node a log file is created in the *log* folder.
-For the normal nodes a row is written to the log file each time the node exceeds the threshold.
-Every row shows a timestamp followed by how many bits the node has sent/received from the previous exceeding of the threshold.
-For leaf nodes instead, a row is written to the log file each time the node suffered a local violation.
-Each row reports a timestamp followed by the number of bits sent/received from the last local violation that the node suffered.
+For each node a log file is created in the *log* folder and in the *log2* folder.
 
-In the main folder there is a script called *qubitCounter.py* which uses the log files to calculate the total qubits exchanged between each threshold overrun by the root node.
+In the main folder there are two scripts:
+- *localStatesAvg.py*: which uses the log files contained in the *log* folder to calculate the percentage error between the root node state and the local state average of all other nodes of the binary tree.
+	The output is contained in the *results.txt* file.
+- *bitCounter.py*: which uses the log files contained in the *log2* folder to calculate the total bits exchanged between each threshold overrun by the root node.
+	The output is contained in the *results2.txt* file.
 
-You can run this script by simply typing:
+You can run these scripts by simply typing:
 ```
+python localStatesAvg.py
 python bitCounter.py
 ```
 
