@@ -51,7 +51,7 @@ def main():
 		f_out.write("\nTotal Qubits Exchanged = {}".format(tot_exch_qubit))
 		tot_step234 /= numChildNodes
 		f_out.write("\nTotal Step234 = {}".format(tot_step234))
-		f_out.write("\nAvg Qubits Exchanged for each LV = {}".format(round(tot_exch_qubit/tot_step234, 2)))
+		f_out.write("\nAvg Qubits Exchanged for each round = {}".format(round(tot_exch_qubit/tot_step234, 2)))
 			
 def getQubitNumber(n):
 	result = n.split(":")

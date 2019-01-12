@@ -99,6 +99,8 @@ class QGMNode():
 				os.makedirs("log")
 			if not os.path.exists("log2"):
 				os.makedirs("log2")
+			if not os.path.exists("G12"):
+				os.makedirs("G12")
 		
 		# Initialize the CQC connection
 		with CQCConnection(self.myself) as self.node:
@@ -324,6 +326,13 @@ class QGMNode():
 				childStep4(self.node, sender, self.regVGlobal, reg1, reg2, self.d, self.indexes2[sender], self.excQubits)
 				to_print = "### Child {}: received new global state: {}".format(self.node.name, self.regVGlobal)
 				print(to_print)
+				# Update regVLocal with the new regVGlobal received from the parent node
+				i = 0
+				while i < self.d:
+					self.regVLocal[i] = self.regVGlobal[i]
+					i = i+1
+				to_print = "### Child {}: updated local state: {}".format(self.node.name, self.regVLocal)
+				print(to_print)
 			elif (self.state[sender] == 'STEP4'):
 				to_print = "#### Child {}: end protocol notified by {}".format(self.node.name, sender)
 				print(to_print)
@@ -438,6 +447,13 @@ class QGMNode():
 				
 				time.sleep(1)
 				
+				# Log G12
+				append_write = 'w'
+				if (os.path.isfile(os.path.join('G12', 'G12.txt'))):
+					append_write = 'a' # append if already exists
+				with open(os.path.join('G12', 'G12.txt'), append_write) as file:
+					file.write(str(datetime.datetime.now())+"_"+str(int(self.regVGlobal.to01(), 2))+"\n")
+				
 				# Check if the threshold has been exceeded
 				if (int(self.regVGlobal.to01(),2) > int(self.t,2)):
 					# Notify the end of the protocol to the child nodes
@@ -500,7 +516,7 @@ def main():
 	# Number of nodes
 	n = 7
 	# Threshold
-	t = '01100000'
+	t = '01011010'
 	# Max number of root node threshold violation
 	l = 20
 	qgmnode = QGMNode(myid, d, p, n, t, l)
