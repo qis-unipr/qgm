@@ -47,6 +47,20 @@ class QGMNode():
 		self.regVLocal = bitarray(d)
 		self.regVGlobal = bitarray(d)
 		
+		# Bit register for the variation of the state
+		self.regDeltaVLocal = bitarray(d)
+		
+		# Temporary bit register
+		self.tmpregDeltaVLocal = bitarray(d)
+		
+		# Sign of the variation as child node
+		self.sign = ""
+		# Dictionary to save each sign of the variation of each child (as parent node)
+		self.sign2 = {}
+		
+		# State after variation update
+		self.new_localStateBit = ""
+		
 		# Dictionary to count the qubits exchanged by the node
 		self.excQubits = {'sent':0, 'received':0}
 		
@@ -131,6 +145,7 @@ class QGMNode():
 		i = 0
 		while i < self.d:	
 			self.regVLocal[i] = 0
+			self.regDeltaVLocal[i] = 0
 			i = i+1
 					
 		# Main loop
@@ -142,36 +157,72 @@ class QGMNode():
 			# and finally randomly changes some bits of the local state register
 			if (self.state[self.identifiers['parent']] == 'PROC'):
 				if (self.pendingViolation == 0):
-					wt = randint(10,16)*2
+					wt = randint(5,8)
 					time.sleep(wt)
 				else:
-					wt = randint(10,15)
+					wt = randint(20,25)
 					time.sleep(wt)
 				if (self.state[self.identifiers['parent']] == 'PROC'):	 # re-check
 					# Check if there is a previous local violation not yet notified
 					# If there are none, it normally proceeds, otherwise it manages that pendant
 					if (self.pendingViolation == 0):
+						# Initialize to 0 the bit register for the local state variation
+						i = 0
+						while i < self.d:	
+							self.tmpregDeltaVLocal[i] = 0
+							i = i+1
 						# Scroll every bit of the register and changes it only if the random value is less than the value of p
 						i = 0
 						flag = 0
-						oldRegVLocal = self.regVLocal.to01()
 						while i < self.d/2:
 							r = random()
 							if r < self.p:
-								self.regVLocal[i*2] = getrandbits(1)
-								self.regVLocal[i*2+1] = getrandbits(1)
+								self.tmpregDeltaVLocal[i*2] = getrandbits(1)
+								self.tmpregDeltaVLocal[i*2+1] = getrandbits(1)
 							i = i+1
-						if not (oldRegVLocal == self.regVLocal.to01()):
-							flag = 1
-
-						# If at least one bit has changed it means that there has been a local violation
-						if flag == 1:
+						# 50% probability that the sign is + or -
+						tmpsign = ""
+						flip = random()
+						if flip < 0.5:
+							tmpsign = "+"
+						else:
+							tmpsign = "-"
+						# Check if local state +- variation exceed the threshold
+						localState = int(self.regVLocal.to01(), 2)
+						variation = int(self.tmpregDeltaVLocal.to01(), 2)
+						threshold = int(self.t, 2)
+						new_localState = 0
+						if tmpsign == "+":
+							new_localState = localState + variation
+						else:
+							new_localState = localState - variation
+						# Update regDeltaVLocal and the sign only if the new local state is positive
+						if (new_localState >= 0 and new_localState <= 255):
+							if new_localState > threshold:
+								flag = 1
+							self.new_localStateBit = str(bin(new_localState)[2:].zfill(self.d))
+							i = 0
+							while i < self.d:	
+								self.regDeltaVLocal[i] = self.tmpregDeltaVLocal[i]
+								i = i+1
+							self.sign = tmpsign
 							# Update log file with the new regVLocal value
 							append_write = 'w'
 							if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
 								append_write = 'a' # append if already exists
 							with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
-								file.write(str(datetime.datetime.now())+"_"+self.regVLocal.to01()+"\n")
+								file.write(str(datetime.datetime.now())+"_"+self.new_localStateBit+"\n")
+							to_print = "## Child {}: regVLocal has undergone a change {}".format(self.node.name, self.new_localStateBit)
+							print(to_print)
+
+						# If at least one bit has changed it means that there has been a local violation
+						if flag == 1:
+							# Update log file with the new regVLocal value
+							#append_write = 'w'
+							#if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
+							#	append_write = 'a' # append if already exists
+							#with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
+							#	file.write(str(datetime.datetime.now())+"_"+self.new_localStateBit+"\n")
 							self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":parent_free"))
 							waitLoop = True
 							while waitLoop:
@@ -179,17 +230,17 @@ class QGMNode():
 									waitLoop = False
 							# Check if it can notify the local violation
 							if (self.parentAnsw == 2):
-								to_print = "## PROC ## Child {}: new local state after local violation: {}".format(self.node.name, self.regVLocal)
+								to_print = "## PROC ## Child {}: new local state after local violation: {}".format(self.node.name, self.new_localStateBit)
 								print(to_print)
 								# Notify the parent node of the local violation by sending it a classic message
-								self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":child_violation"))
+								self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":child_violation:"+self.sign))
 								# Update the Bell pair and sends the modified qubits to the parent node starting the protocol STEP2
 								self.state[self.identifiers['parent']] = 'STEP2'					
 								del self.indexes[self.identifiers['parent']][:] # perform some cleaning
-								childStep2(self.node, self.identifiers['parent'], self.regVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
+								childStep2(self.node, self.identifiers['parent'], self.regDeltaVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
 							else:
 								self.pendingViolation = 1
-								to_print = "## PROC ## Child {}: local violation occurred but cannot notify now: {}".format(self.node.name, self.regVLocal)
+								to_print = "## PROC ## Child {}: local violation occurred but cannot notify now: {}".format(self.node.name, self.new_localStateBit)
 								print(to_print)
 								time.sleep(8)
 							self.parentAnsw = 0
@@ -202,14 +253,14 @@ class QGMNode():
 								waitLoop = False
 						# Manage the pending local violation
 						if (self.parentAnsw == 2):
-							to_print = "## PROC ## Child {}: handling the pending local violation occurred before: {}".format(self.node.name, self.regVLocal)
+							to_print = "## PROC ## Child {}: handling the pending local violation occurred before: {}".format(self.node.name, self.new_localStateBit)
 							print(to_print)
 							# Notify the parent node of the local violation by sending it a classic message
-							self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":child_violation"))
+							self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":child_violation:"+self.sign))
 							# Update the Bell pair and sends the modified qubits to the parent node starting the protocol STEP2
 							self.state[self.identifiers['parent']] = 'STEP2'					
 							del self.indexes[self.identifiers['parent']][:] # perform some cleaning
-							childStep2(self.node, self.identifiers['parent'], self.regVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
+							childStep2(self.node, self.identifiers['parent'], self.regDeltaVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
 							self.pendingViolation = 0
 							self.parentAnsw = 0
 						else:
@@ -277,8 +328,15 @@ class QGMNode():
 			elif (msg == "parent_is_free"):
 				self.parentAnsw = 2
 			elif (msg == "child_violation"):
+				self.sign2[sender] = content[2]
 				tComm = Thread(target=self.commHandler, args=(sender, self.regA, self.regAB))
 				tComm.start()
+			elif (msg == "step2"):
+				self.node.sendClassical(sender, str.encode(self.myself+":mysign:"+self.sign))
+				tComm = Thread(target=self.commHandler, args=(sender, self.regB, self.regBA))
+				tComm.start()
+			elif (msg == "mysign"):
+				self.sign2[sender] = content[2]
 			else:
 				# Start a new thread to handle the communication, if the message was sent
 				# from the parent node it passes the regB registers and regBA, otherwise regA and regAB
@@ -317,7 +375,7 @@ class QGMNode():
 				# Update the Bell pairs and send changed qubits to parent
 				self.state[sender] = 'STEP2'
 				del self.indexes[sender][:] # perform some cleaning
-				childStep2(self.node, sender, self.regVLocal, reg1, reg2, self.d, self.indexes[sender], self.excQubits)
+				childStep2(self.node, sender, self.regDeltaVLocal, reg1, reg2, self.d, self.indexes[sender], self.excQubits)
 			elif (self.state[sender] == 'STEP2'):
 				self.state[sender] = 'STEP3'
 				del self.indexes2[sender][:] # perform some cleaning
@@ -399,10 +457,19 @@ class QGMNode():
 							to_print = "App {}: nbsd of {} --> i, b1, b2: {}, {}, {}".format(self.node.name, self.identifiers[i], j, int(reg[i][j*2]), int(reg[i][j*2+1]))
 							print(to_print)
 					j = j+1
-				# Calculate the new global state from the average of the local states of the two child nodes
+				# Calculate the new global state from the average of the local states of the n-1 child nodes
 				avgIntLocalStates = 0
+				state = int(self.regVGlobal.to01(), 2)
 				for i in range(1, self.n):
-					avgIntLocalStates += int(reg[i].to01(),2)
+					variation = int(reg[i].to01(), 2)
+					if self.sign2[self.identifiers[i]] == "+":
+						avgIntLocalStates += (state + variation)
+					elif self.sign2[self.identifiers[i]] == "-":
+						avgIntLocalStates += (state - variation)
+					else:
+						avgIntLocalStates += state
+					to_print = "avgIntLocalStates after state received from {}: {}".format(self.identifiers[i], avgIntLocalStates)
+					print(to_print)
 				avgIntLocalStates /= (self.n-1)
 				avgBitLocalStates = bin(int(avgIntLocalStates))[2:].zfill(self.d)
 				avgBitLocalStatesList = [int(i) for i in str(avgBitLocalStates)]
@@ -454,6 +521,8 @@ class QGMNode():
 				with open(os.path.join('G12', 'G12.txt'), append_write) as file:
 					file.write(str(datetime.datetime.now())+"_"+str(int(self.regVGlobal.to01(), 2))+"\n")
 				
+				self.overrunNumber += 1
+				
 				# Check if the threshold has been exceeded
 				if (int(self.regVGlobal.to01(),2) > int(self.t,2)):
 					# Notify the end of the protocol to the child nodes
@@ -478,8 +547,6 @@ class QGMNode():
 							file.write(str(datetime.datetime.now())+"_"+self.node.name+"_root"+"_S:"+str(self.excQubits['sent'])+"_R:"+str(self.excQubits['received'])+"\n")
 						self.excQubits['sent'] = 0
 						self.excQubits['received'] = 0
-						
-						self.overrunNumber += 1
 					else:
 						print("Parent {}: threshold has been exceeded.".format(self.node.name))
 						
@@ -496,6 +563,9 @@ class QGMNode():
 					for i in range(1, self.n):
 						self.node.sendClassical(self.identifiers[i], str.encode(self.node.name+":protocol_terminated"))
 					self.busy = 0
+					
+					if (self.overrunNumber == self.l):
+						call(["killall", "python3"])
 					
 
 ##############################
@@ -516,9 +586,9 @@ def main():
 	# Number of nodes
 	n = 7
 	# Threshold
-	t = '01011010'
+	t = '01111111'
 	# Max number of root node threshold violation
-	l = 20
+	l = 50
 	qgmnode = QGMNode(myid, d, p, n, t, l)
 	print(qgmnode.identifiers)
 		
