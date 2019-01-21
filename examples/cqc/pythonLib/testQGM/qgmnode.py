@@ -55,6 +55,7 @@ class QGMNode():
 		
 		# Sign of the variation as child node
 		self.sign = ""
+		
 		# Dictionary to save each sign of the variation of each child (as parent node)
 		self.sign2 = {}
 		
@@ -217,12 +218,6 @@ class QGMNode():
 
 						# If at least one bit has changed it means that there has been a local violation
 						if flag == 1:
-							# Update log file with the new regVLocal value
-							#append_write = 'w'
-							#if (os.path.isfile(os.path.join('log', self.node.name+'.txt'))):
-							#	append_write = 'a' # append if already exists
-							#with open(os.path.join('log', self.node.name+'.txt'), append_write) as file:
-							#	file.write(str(datetime.datetime.now())+"_"+self.new_localStateBit+"\n")
 							self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":parent_free"))
 							waitLoop = True
 							while waitLoop:
