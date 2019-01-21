@@ -7,10 +7,10 @@ Implementation and testing of the QGM protocol with [SimulaQron](http://www.simu
 In this example we have N nodes where the root node is the only parent node (the coordinator) while all the others are child nodes (the producers).
 
 Child nodes can suffer a local violation.
-Each child node maintains its own global sub-status that communicates to the parent node only if it exceeds a pre-set threshold.
+Each child node maintains its own global sub-state that communicates to the parent node only if it exceeds a pre-set threshold.
 
-When a child node suffers a local violation, it communicates it to the parent node, which acquires the status of the other child nodes.
-Subsequently, it averages the states and checks whether the threshold has been exceeded.
+When a child node suffers a local violation, it communicates the variation to the parent node, which acquires also the variation of the other child nodes.
+Subsequently, it calculates and averages the states and checks whether the threshold has been exceeded.
 
 *Note: the current version has been tested with a maximum of 7 nodes.*
 
@@ -72,7 +72,7 @@ If you want to set up a different network of nodes you can change some parameter
   Note: if you change the number of nodes you also need to update the value of the 'n' variable in the main function of the *qgmnode.py* file.
 * In the *qgmnode.py* file you can change the value of the variable 'd' where d/2 represents the number of qubits used by each node.
 * In the *qgmnode.py* file you can change the value of the variable 't' if you want to change the threshold value.
-* In the *qgmnode.py* file you can change the value of the variable 'l' if you want to change the maximum number of threshold violations by the root node.
+* In the *qgmnode.py* file you can change the value of the variable 'l' if you want to change the number of protocol executions.
 
 ### Logging
 

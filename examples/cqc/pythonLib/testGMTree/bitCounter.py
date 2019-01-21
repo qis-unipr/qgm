@@ -50,7 +50,7 @@ def main():
 		tot_execution /= 2
 		f_out.write("\nTotal Bits Exchanged = {}".format(tot_exch_bit))
 		f_out.write("\nTotal Protocol Executions = {}".format(tot_execution))
-		f_out.write("\nAvg Bits Exchanged for one round = {}".format(tot_exch_bit/tot_execution))
+		f_out.write("\nAvg Bits Exchanged for each round = {}".format(tot_exch_bit/tot_execution))
 			
 def getBitNumber(n):
 	result = n.split(":")

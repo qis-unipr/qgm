@@ -9,10 +9,10 @@ The root of the tree is named 'node0', which can only play the role of the coord
 Every other node can play both the role of coordinator and producer.
 
 Only leaf nodes (i.e. nodes without child nodes) can suffer a local violation.
-Each sub-tree maintains its own global sub-status that communicates to the upper parent node only if it exceeds a pre-set threshold.
+Each sub-tree maintains its own global sub-state that communicates to the upper parent node only if it exceeds a pre-set threshold.
 
-When a leaf node suffers a local violation, it communicates it to the parent node, which acquires the status of the other brother node.
-Subsequently, it averages the two states and checks whether the threshold has been exceeded.
+When a leaf node suffers a local violation, it communicates the variation to the parent node, which acquires also the variation of the other brother node.
+Subsequently, it calculates and averages the two states and checks whether the threshold has been exceeded.
 If the threshold has been exceeded, this procedure is repeated in the upper level sub-tree.
 
 *Note: the current version has been tested with a maximum of 7 nodes.*
@@ -54,9 +54,10 @@ If the threshold has been exceeded, this procedure is repeated in the upper leve
 
 If you want to set up a different network of nodes you can change some parameters in the following files:
 * In the *run.sh* file you can change the number of nodes, and specify for each node its name and the probability that it will suffer a local violation.
-  Note: if you change the number of nodes you also need to update the value of the 'n' variable in the main function of the *qgmnode.py* file.
-* In the *qgmnode.py* file you can change the value of the variable 'd' where d is the number of bits used to represent the state of each node.
-* In the *qgmnode.py* file you can change the value of the variable 't' if you want to change the threshold value.
+  Note: if you change the number of nodes you also need to update the value of the 'n' variable in the main function of the *gmnode.py* file.
+* In the *gmnode.py* file you can change the value of the variable 'd' where d is the number of bits used to represent the state of each node.
+* In the *gmnode.py* file you can change the value of the variable 't' if you want to change the threshold value.
+* In the *gmnode.py* file you can change the value of the variable 'l' if you want to change the number of protocol executions.
 
 ### Logging
 

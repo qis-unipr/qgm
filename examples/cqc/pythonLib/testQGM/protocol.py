@@ -52,25 +52,25 @@ def parentStep1(node, sender, regA, regAB, d, excQubits):
 #
 #  Child Step 2
 #
-def childStep2(node, sender, regVLocal, regB, regBA, d, indexes, excQubits):
+def childStep2(node, sender, regDeltaVLocal, regB, regBA, d, indexes, excQubits):
 	to_print = "## 2 ## Child {}: performing STEP2 with {}".format(node.name, sender)
 	print(to_print)
 	time.sleep(0.5)
 	i = 0
 	while  i < d/2:
-		if ((regVLocal[i*2] == 0) and (regVLocal[i*2+1] == 1)):
+		if ((regDeltaVLocal[i*2] == 0) and (regDeltaVLocal[i*2+1] == 1)):
 			# turn Beta00 to Beta01
 			regB[sender][i].X()
 			node.sendQubit(regB[sender][i], sender)
 			indexes.append(i)
 			excQubits['sent'] += 1
-		elif ((regVLocal[i*2] == 1) and (regVLocal[i*2+1] == 0)):
+		elif ((regDeltaVLocal[i*2] == 1) and (regDeltaVLocal[i*2+1] == 0)):
 			# turn Beta00 to Beta10
 			regB[sender][i].Z()
 			node.sendQubit(regB[sender][i], sender) 	
 			indexes.append(i)
 			excQubits['sent'] += 1
-		elif ((regVLocal[i*2] == 1) and (regVLocal[i*2+1] == 1)):
+		elif ((regDeltaVLocal[i*2] == 1) and (regDeltaVLocal[i*2+1] == 1)):
 			# turn Beta00 to Beta11
 			regB[sender][i].Z()
 			regB[sender][i].X()
