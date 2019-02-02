@@ -8,7 +8,7 @@ In this example we have N nodes forming a binary tree.
 The root of the tree is named 'node0', which can only play the role of the coordinator.
 Every other node can play both the role of coordinator and producer.
 
-Only leaf nodes (i.e. nodes without child nodes) can suffer a local violation.
+Only leaf nodes (i.e., nodes without child nodes) can suffer a local violation.
 Each sub-tree maintains its own global sub-state that communicates to the upper parent node only if it exceeds a pre-set threshold.
 
 When a leaf node suffers a local violation, it communicates the variation to the parent node, which acquires also the variation of the other brother node.
@@ -32,7 +32,14 @@ If the threshold has been exceeded, this procedure is repeated in the upper leve
 
 1. Clone the testGMTree folder in: *SimulaQron/examples/cdc/pythonLib*.
 
-2. Move the *myStarter.sh* file to *SimulaQron/run*.
+2. Enter in: *SimulaQron/config* and edit the following files:
+   - *appNodes.cfg*
+   - *cqcNodes.cfg*
+   - *virtualNodes.cfg*
+
+   in order to set the number of virtual nodes and CQC servers (node0, node1, node2, ...).
+
+3. Move the *myStarter.sh* file to *SimulaQron/run*.
 
 ## Running
 
@@ -48,7 +55,7 @@ If the threshold has been exceeded, this procedure is repeated in the upper leve
    sh run.sh
    ```
 
-*Note: the current version has been tested with Python 3.6 and 3.7*
+*Note: the current version has been tested with Python 3.6 and 3.7 using SimulaQron v1.1*
 
 ### Settings
 
@@ -74,6 +81,8 @@ You can run these scripts by simply typing:
 python localStatesAvg.py
 python bitCounter.py
 ```
+
+In the *G12* folder there is a file that contains the log of all times that the root node has updated the global state.
 
 ## License
 

@@ -27,7 +27,7 @@ Subsequently, it calculates and averages the states and checks whether the thres
 
 ### Installing
 
-1. Clone the testQGMTree folder in: *SimulaQron/examples/cdc/pythonLib*.
+1. Clone the testQGM folder in: *SimulaQron/examples/cdc/pythonLib*.
 
 2. Enter in: *SimulaQron/config* and edit the following files:
    - *appNodes.cfg*
@@ -63,7 +63,7 @@ Subsequently, it calculates and averages the states and checks whether the thres
    sh run.sh
    ```
 
-*Note: the current version has been tested with Python 3.6 and 3.7*
+*Note: the current version has been tested with Python 3.6 and 3.7 using SimulaQron v1.1*
 
 ### Settings
 
@@ -89,6 +89,8 @@ You can run these scripts by simply typing:
 python localStatesAvg.py
 python qubitCounter.py
 ```
+
+In the *G12* folder there is a file that contains the log of all times that the root node has updated the global state.
 
 ## License
 
