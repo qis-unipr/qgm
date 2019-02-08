@@ -496,8 +496,6 @@ class GMNode():
 					avgIntLocalStates += (state - variationSender)
 				else:
 					avgIntLocalStates += state
-				to_print = "avgIntLocalStates after state received from {}: {}".format(sender, avgIntLocalStates)
-				print(to_print)
 				variationOtherChild = int(regDeltaVLocalChild[otherChild].to01(), 2)
 				if self.sign2[otherChild] == "+":
 					avgIntLocalStates += (state + variationOtherChild)
@@ -505,8 +503,6 @@ class GMNode():
 					avgIntLocalStates += (state - variationOtherChild)
 				else:
 					avgIntLocalStates += state
-				to_print = "avgIntLocalStates after state received from {}: {}".format(otherChild, avgIntLocalStates)
-				print(to_print)
 				avgIntLocalStates /= 2
 				avgBitLocalStates = bin(int(avgIntLocalStates))[2:].zfill(self.d)
 				avgBitLocalStatesList = [int(i) for i in str(avgBitLocalStates)]

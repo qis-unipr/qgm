@@ -32,8 +32,8 @@ class QGMNode():
 		self.indexes = {}
 		self.indexes2 = {}
 		
-		# Flag to establish when STEP1 has been terminated with all the nodes involved
-		self.step1Terminated = 0
+		# Flag to establish when PHASE1 has been terminated with all the nodes involved
+		self.phase1Terminated = 0
 		# Flag to determine if there are pending local violations that have yet to be resolved
 		self.pendingViolation = 0
 		# Flag to determine if the node is executing the protocol
@@ -229,10 +229,10 @@ class QGMNode():
 								print(to_print)
 								# Notify the parent node of the local violation by sending it a classic message
 								self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":child_violation:"+self.sign))
-								# Update the Bell pair and sends the modified qubits to the parent node starting the protocol STEP2
-								self.state[self.identifiers['parent']] = 'STEP2'					
+								# Update the Bell pair and sends the modified qubits to the parent node starting the protocol PHASE2
+								self.state[self.identifiers['parent']] = 'PHASE2'					
 								del self.indexes[self.identifiers['parent']][:] # perform some cleaning
-								childStep2(self.node, self.identifiers['parent'], self.regDeltaVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
+								childPhase2(self.node, self.identifiers['parent'], self.regDeltaVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
 							else:
 								self.pendingViolation = 1
 								to_print = "## PROC ## Child {}: local violation occurred but cannot notify now: {}".format(self.node.name, self.new_localStateBit)
@@ -252,10 +252,10 @@ class QGMNode():
 							print(to_print)
 							# Notify the parent node of the local violation by sending it a classic message
 							self.node.sendClassical(self.identifiers['parent'], str.encode(self.myself+":child_violation:"+self.sign))
-							# Update the Bell pair and sends the modified qubits to the parent node starting the protocol STEP2
-							self.state[self.identifiers['parent']] = 'STEP2'					
+							# Update the Bell pair and sends the modified qubits to the parent node starting the protocol PHASE2
+							self.state[self.identifiers['parent']] = 'PHASE2'					
 							del self.indexes[self.identifiers['parent']][:] # perform some cleaning
-							childStep2(self.node, self.identifiers['parent'], self.regDeltaVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
+							childPhase2(self.node, self.identifiers['parent'], self.regDeltaVLocal, self.regB, self.regBA, self.d, self.indexes[self.identifiers['parent']], self.excQubits)
 							self.pendingViolation = 0
 							self.parentAnsw = 0
 						else:
@@ -278,13 +278,13 @@ class QGMNode():
 			self.regVGlobal[i] = 0	
 			i = i+1
 		
-		# STEP1 management only for the root node
+		# PHASE1 management only for the root node
 		if (self.myid == 0):
 			for i in range(1, self.n):
-				self.state[self.identifiers[i]] = 'STEP1'
-				parentStep1(self.node, self.identifiers[i], self.regA, self.regAB, self.d, self.excQubits)
+				self.state[self.identifiers[i]] = 'PHASE1'
+				parentPhase1(self.node, self.identifiers[i], self.regA, self.regAB, self.d, self.excQubits)
 				self.state[self.identifiers[i]] = 'WAIT'
-				self.node.sendClassical(self.identifiers[i], str.encode(self.myself+":start_step1"))
+				self.node.sendClassical(self.identifiers[i], str.encode(self.myself+":start_phase1"))
 				data = self.node.recvClassical()
 				content = data.decode().split(":")
 				sender = content[0]
@@ -292,9 +292,9 @@ class QGMNode():
 				to_print = "App {}: received message '{}' from: {}".format(self.node.name, msg, sender)
 				print(to_print)
 			
-			# Notify all child nodes that STEP1 is terminated
+			# Notify all child nodes that PHASE1 is terminated
 			for i in range(1, self.n):
-				self.node.sendClassical(self.identifiers[i], str.encode(self.myself+":step1_terminated"))
+				self.node.sendClassical(self.identifiers[i], str.encode(self.myself+":phase1_terminated"))
 		
 		# Wait to receive a classic message, after which it handles it in a dedicated thread
 		while True:
@@ -306,12 +306,12 @@ class QGMNode():
 			print(to_print)
 			
 			# Check the type of the received message
-			if (msg == "start_step1"):
-				self.state[self.identifiers['parent']] = 'STEP1'
+			if (msg == "start_phase1"):
+				self.state[self.identifiers['parent']] = 'PHASE1'
 				tComm = Thread(target=self.commHandler, args=(sender, self.regB, self.regBA))
 				tComm.start()
-			elif (msg == "step1_terminated"):
-				self.step1Terminated = 1
+			elif (msg == "phase1_terminated"):
+				self.phase1Terminated = 1
 			elif (msg == "parent_free"):
 				if (self.busy):
 					self.node.sendClassical(sender, str.encode(self.myself+":parent_not_free"))
@@ -326,7 +326,7 @@ class QGMNode():
 				self.sign2[sender] = content[2]
 				tComm = Thread(target=self.commHandler, args=(sender, self.regA, self.regAB))
 				tComm.start()
-			elif (msg == "step2"):
+			elif (msg == "phase2"):
 				self.node.sendClassical(sender, str.encode(self.myself+":mysign:"+self.sign))
 				tComm = Thread(target=self.commHandler, args=(sender, self.regB, self.regBA))
 				tComm.start()
@@ -352,13 +352,13 @@ class QGMNode():
 	
 		### Actions as child node ###
 		if (sender == self.identifiers['parent']):
-			if (self.state[sender] == 'STEP1'):
-				childStep1(self.node, sender, reg1, reg2, self.d, self.excQubits)
-				self.node.sendClassical(sender, str.encode(self.myself+":end_step1"))
-				# Wait for the parent node to know that it has finished STEP1 with all its child nodes
+			if (self.state[sender] == 'PHASE1'):
+				childPhase1(self.node, sender, reg1, reg2, self.d, self.excQubits)
+				self.node.sendClassical(sender, str.encode(self.myself+":end_phase1"))
+				# Wait for the parent node to know that it has finished PHASE1 with all its child nodes
 				waitLoop = True
 				while waitLoop:
-					if (self.step1Terminated):
+					if (self.phase1Terminated):
 						waitLoop = False
 				self.state[sender] = 'PROC'
 			elif (self.state[sender] == 'PROC'):
@@ -368,15 +368,15 @@ class QGMNode():
 				print(to_print)
 			elif (self.state[sender] == 'WAIT'):	
 				# Update the Bell pairs and send changed qubits to parent
-				self.state[sender] = 'STEP2'
+				self.state[sender] = 'PHASE2'
 				del self.indexes[sender][:] # perform some cleaning
-				childStep2(self.node, sender, self.regDeltaVLocal, reg1, reg2, self.d, self.indexes[sender], self.excQubits)
-			elif (self.state[sender] == 'STEP2'):
-				self.state[sender] = 'STEP3'
+				childPhase2(self.node, sender, self.regDeltaVLocal, reg1, reg2, self.d, self.indexes[sender], self.excQubits)
+			elif (self.state[sender] == 'PHASE2'):
+				self.state[sender] = 'PHASE3'
 				del self.indexes2[sender][:] # perform some cleaning
-				childStep3(self.node, sender, reg1, reg2, self.d, self.indexes[sender], self.indexes2[sender], self.excQubits)
-				self.state[sender] = 'STEP4'
-				childStep4(self.node, sender, self.regVGlobal, reg1, reg2, self.d, self.indexes2[sender], self.excQubits)
+				childPhase3(self.node, sender, reg1, reg2, self.d, self.indexes[sender], self.indexes2[sender], self.excQubits)
+				self.state[sender] = 'PHASE4'
+				childPhase4(self.node, sender, self.regVGlobal, reg1, reg2, self.d, self.indexes2[sender], self.excQubits)
 				to_print = "### Child {}: received new global state: {}".format(self.node.name, self.regVGlobal)
 				print(to_print)
 				# Update regVLocal with the new regVGlobal received from the parent node
@@ -386,7 +386,7 @@ class QGMNode():
 					i = i+1
 				to_print = "### Child {}: updated local state: {}".format(self.node.name, self.regVLocal)
 				print(to_print)
-			elif (self.state[sender] == 'STEP4'):
+			elif (self.state[sender] == 'PHASE4'):
 				to_print = "#### Child {}: end protocol notified by {}".format(self.node.name, sender)
 				print(to_print)
 				
@@ -412,19 +412,19 @@ class QGMNode():
 					if not (self.identifiers[i] == sender):
 						self.node.sendClassical(self.identifiers[i], str.encode(self.myself+":wait"))
 				
-				# Start the parentStep2 with the child node that has notified a local violation
-				self.state[sender] = 'STEP2'
+				# Start the parentPhase2 with the child node that has notified a local violation
+				self.state[sender] = 'PHASE2'
 				del self.indexes[sender][:] # perform some cleaning
-				parentStep2(self.node, sender, reg2, self.d, self.indexes[sender], self.excQubits)
+				parentPhase2(self.node, sender, reg2, self.d, self.indexes[sender], self.excQubits)
 				
-				# Send a classic message to the other child nodes to force them into the STEP2 state (assuming they are in the WAIT state)
+				# Send a classic message to the other child nodes to force them into the PHASE2 state (assuming they are in the WAIT state)
 				for i in range(1, self.n):
 					if not (self.identifiers[i] == sender):
-						self.node.sendClassical(self.identifiers[i], str.encode(self.myself+":step2"))
-						# Start the parentStep2 with the other child node
-						self.state[self.identifiers[i]] = 'STEP2'
+						self.node.sendClassical(self.identifiers[i], str.encode(self.myself+":phase2"))
+						# Start the parentPhase2 with the other child node
+						self.state[self.identifiers[i]] = 'PHASE2'
 						del self.indexes[self.identifiers[i]][:] # perform some cleaning
-						parentStep2(self.node, self.identifiers[i], reg2, self.d, self.indexes[self.identifiers[i]], self.excQubits)
+						parentPhase2(self.node, self.identifiers[i], reg2, self.d, self.indexes[self.identifiers[i]], self.excQubits)
 								
 				# Update the global registry
 				time.sleep(2)
@@ -463,8 +463,6 @@ class QGMNode():
 						avgIntLocalStates += (state - variation)
 					else:
 						avgIntLocalStates += state
-					to_print = "avgIntLocalStates after state received from {}: {}".format(self.identifiers[i], avgIntLocalStates)
-					print(to_print)
 				avgIntLocalStates /= (self.n-1)
 				avgBitLocalStates = bin(int(avgIntLocalStates))[2:].zfill(self.d)
 				avgBitLocalStatesList = [int(i) for i in str(avgBitLocalStates)]
@@ -485,26 +483,26 @@ class QGMNode():
 				print("New regVLocal of {}: {}".format(self.node.name, self.regVLocal))
 				time.sleep(3)		
 				
-				# Start parentStep3 and parentStep4 with each child node (first one, then the other)
+				# Start parentPhase3 and parentPhase4 with each child node (first one, then the other)
 				# Current child node
-				self.state[sender] = 'STEP3'
-				self.node.sendClassical(sender, str.encode(self.myself+":step3")) # wake up sender to STEP3
+				self.state[sender] = 'PHASE3'
+				self.node.sendClassical(sender, str.encode(self.myself+":phase3")) # wake up sender to PHASE3
 				del self.indexes2[sender][:] # perform some cleaning
-				parentStep3(self.node, sender, self.regVGlobal, reg1, reg2, self.d, self.indexes[sender], self.indexes2[sender], self.excQubits)
-				self.state[sender] = 'STEP4'
-				parentStep4(self.node, sender, reg1, reg2, self.d, self.indexes2[sender], self.excQubits)
+				parentPhase3(self.node, sender, self.regVGlobal, reg1, reg2, self.d, self.indexes[sender], self.indexes2[sender], self.excQubits)
+				self.state[sender] = 'PHASE4'
+				parentPhase4(self.node, sender, reg1, reg2, self.d, self.indexes2[sender], self.excQubits)
 				self.state[sender] = 'WAIT'
 											  
 				for i in range(1, self.n):
 					if not (self.identifiers[i] == sender):
 						# Other child node
 						time.sleep(2)
-						self.state[self.identifiers[i]] = 'STEP3'
-						self.node.sendClassical(self.identifiers[i], str.encode(self.myself+":step3")) # wake up other child to STEP3
+						self.state[self.identifiers[i]] = 'PHASE3'
+						self.node.sendClassical(self.identifiers[i], str.encode(self.myself+":phase3")) # wake up other child to PHASE3
 						del self.indexes2[self.identifiers[i]][:] # perform some cleaning
-						parentStep3(self.node, self.identifiers[i], self.regVGlobal, reg1, reg2, self.d, self.indexes[self.identifiers[i]], self.indexes2[self.identifiers[i]], self.excQubits)
-						self.state[self.identifiers[i]] = 'STEP4'
-						parentStep4(self.node, self.identifiers[i], reg1, reg2, self.d, self.indexes2[self.identifiers[i]], self.excQubits)
+						parentPhase3(self.node, self.identifiers[i], self.regVGlobal, reg1, reg2, self.d, self.indexes[self.identifiers[i]], self.indexes2[self.identifiers[i]], self.excQubits)
+						self.state[self.identifiers[i]] = 'PHASE4'
+						parentPhase4(self.node, self.identifiers[i], reg1, reg2, self.d, self.indexes2[self.identifiers[i]], self.excQubits)
 						self.state[self.identifiers[i]] = 'WAIT'
 				
 				time.sleep(1)

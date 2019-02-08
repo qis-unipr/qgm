@@ -12,11 +12,11 @@ from utils import *
 
 ###################################
 #
-#  Child Step 1
+#  Child Phase 1
 #
-def childStep1(node, sender, regB, regBA, d, excQubits):
+def childPhase1(node, sender, regB, regBA, d, excQubits):
 
-	to_print = "## 1 ## Child {}: performing STEP1 with {}".format(node.name, sender)
+	to_print = "## 1 ## Child {}: performing PHASE1 with {}".format(node.name, sender)
 	print(to_print)
 	# Receive qubits
 	i = 0
@@ -33,10 +33,10 @@ def childStep1(node, sender, regB, regBA, d, excQubits):
 	
 ###################################
 #
-#  Parent Step 1
+#  Parent Phase 1
 #
-def parentStep1(node, sender, regA, regAB, d, excQubits):
-	to_print = "## 1 ## Parent {}: performing STEP1 with {}".format(node.name, sender)
+def parentPhase1(node, sender, regA, regAB, d, excQubits):
+	to_print = "## 1 ## Parent {}: performing PHASE1 with {}".format(node.name, sender)
 	print(to_print)
 	time.sleep(0.5)
 	i = 0
@@ -50,10 +50,10 @@ def parentStep1(node, sender, regA, regAB, d, excQubits):
 
 ###################################
 #
-#  Child Step 2
+#  Child Phase 2
 #
-def childStep2(node, sender, regDeltaVLocal, regB, regBA, d, indexes, excQubits):
-	to_print = "## 2 ## Child {}: performing STEP2 with {}".format(node.name, sender)
+def childPhase2(node, sender, regDeltaVLocal, regB, regBA, d, indexes, excQubits):
+	to_print = "## 2 ## Child {}: performing PHASE2 with {}".format(node.name, sender)
 	print(to_print)
 	time.sleep(0.5)
 	i = 0
@@ -86,10 +86,10 @@ def childStep2(node, sender, regDeltaVLocal, regB, regBA, d, indexes, excQubits)
 	
 ###################################
 #
-#  Parent Step 2
+#  Parent Phase 2
 #
-def parentStep2(node, sender, regAB, d, indexes, excQubits):
-	to_print = "## 2 ## Parent {}: performing STEP2 with {}".format(node.name, sender)
+def parentPhase2(node, sender, regAB, d, indexes, excQubits):
+	to_print = "## 2 ## Parent {}: performing PHASE2 with {}".format(node.name, sender)
 	print(to_print)
 	# get changed qubits from child 
 	i = 0
@@ -106,10 +106,10 @@ def parentStep2(node, sender, regAB, d, indexes, excQubits):
 
 ###################################
 #
-#  Child Step 3
+#  Child Phase 3
 #
-def childStep3(node, sender, regB, regBA, d, indexes, indexes2, excQubits):
-	to_print = "## 3 ## Child {}: performing STEP3 with {}".format(node.name, sender)
+def childPhase3(node, sender, regB, regBA, d, indexes, indexes2, excQubits):
+	to_print = "## 3 ## Child {}: performing PHASE3 with {}".format(node.name, sender)
 	print(to_print)
 	# receive all the updated Bell pairs from parent
 	i = 0
@@ -159,9 +159,9 @@ def childStep3(node, sender, regB, regBA, d, indexes, indexes2, excQubits):
 	
 ###################################
 #
-#  Parent Step 3
+#  Parent Phase 3
 #
-def parentStep3(node, sender, regVGlobal, regA, regAB, d, indexes, indexes2, excQubits):
+def parentPhase3(node, sender, regVGlobal, regA, regAB, d, indexes, indexes2, excQubits):
 	# update the shared Bell pairs (only those that must change) and send them to the child
 	time.sleep(0.5)
 	i = 0
@@ -212,10 +212,10 @@ def parentStep3(node, sender, regVGlobal, regA, regAB, d, indexes, indexes2, exc
 
 ###################################
 #
-#  Child Step 4
+#  Child Phase 4
 #
-def childStep4(node, sender, regVGlobal, regB, regBA, d, indexes, excQubits):
-	to_print = "## 4 ## Child {}: performing STEP4 with {}".format(node.name, sender)
+def childPhase4(node, sender, regVGlobal, regB, regBA, d, indexes, excQubits):
+	to_print = "## 4 ## Child {}: performing PHASE4 with {}".format(node.name, sender)
 	print(to_print)
 	# update regVGlobal[]
 	i = 0
@@ -269,11 +269,11 @@ def childStep4(node, sender, regVGlobal, regB, regBA, d, indexes, excQubits):
 	
 ###################################
 #
-#  Parent Step 4
+#  Parent Phase 4
 #
-def parentStep4(node, sender, regA, regAB, d, indexes, excQubits):
+def parentPhase4(node, sender, regA, regAB, d, indexes, excQubits):
 	time.sleep(0.5)
-	to_print = "## 4 ## Parent {}: performing STEP4 with {}".format(node.name, sender)
+	to_print = "## 4 ## Parent {}: performing PHASE4 with {}".format(node.name, sender)
 	print(to_print)
 	# get reinitialized qubits from the child
 	i = 0
