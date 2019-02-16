@@ -1,5 +1,5 @@
 ##################################################################################
-## Script which count the total of the qubits exchanged during the execution    ##
+## Script which count the total of the bits exchanged during the execution      ##
 ## of the protocol, between each exceeding of the threshold by the root node.   ##
 ##																			    ##
 ## It is executed on the log file of each node, contained in the 'log2' folder. ##
