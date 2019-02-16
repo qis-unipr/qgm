@@ -43,7 +43,7 @@ def main():
 								receivedBits += getBitNumber(row2Splitted[4])
 								tot_step234 += 1
 								f_out.write(row2)
-				tot_exch_bit += sentBits*2
+				tot_exch_bit += sentBits
 				f_out.write("-->Sent={}\n".format(sentBits))
 				f_out.write("-->Received={}\n\n".format(receivedBits))
 				precRowDateTime = rowDateTime
