@@ -28,7 +28,7 @@ If the threshold has been exceeded, this procedure is repeated in the upper leve
   pip install bitarray
   ```
 
-  ### Setup
+### Setup
 
   1. To change the setup of the network, edit the .simulaqron.json file in the testGMTree/ folder.
   See: https://softwarequtech.github.io/SimulaQron/html/ConfNodes.html
