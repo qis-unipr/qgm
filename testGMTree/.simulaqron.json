@@ -1,0 +1,7 @@
+{
+    "backend": "projectq",
+    "log-level": 10
+    "max-qubits": 40
+    "max-registers":100
+    "recv-timeout":5.0
+}

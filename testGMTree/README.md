@@ -1,18 +1,21 @@
 # Geometric Monitoring (GM)
 
-Implementation and testing of the GM protocol with [SimulaQron](http://www.simulaqron.org/) v.3.0.10
+Implementation and testing of the GM-Tree protocol with [SimulaQron](http://www.simulaqron.org/) v.3.0.10
 
 ## Getting Started
 
-In this example we have N nodes where the root node is the only parent node (the coordinator) while all the others are child nodes (the producers).
+In this example we have N nodes forming a binary tree.
+The root of the tree is named 'node0', which can only play the role of the coordinator.
+Every other node can play both the role of coordinator and producer.
 
-Child nodes can suffer a local violation.
-Each child node maintains its own global sub-state that communicates to the parent node only if it exceeds a pre-set threshold.
+Only leaf nodes (i.e., nodes without child nodes) can suffer a local violation.
+Each sub-tree maintains its own global sub-state that communicates to the upper parent node only if it exceeds a pre-set threshold.
 
-When a child node suffers a local violation, it communicates the variation of its local state to the parent node, which acquires also the variation of the other child nodes.
-Subsequently, it calculates and averages all the local states acquired, and checks whether the threshold has been exceeded.
+When a leaf node suffers a local violation, it communicates the variation to the parent node, which acquires also the variation of the other brother node.
+Subsequently, it calculates and averages the two states and checks whether the threshold has been exceeded.
+If the threshold has been exceeded, this procedure is repeated in the upper level sub-tree.
 
-*Note: the current version has been tested with a maximum of 7 nodes*
+*Note: the current version has been tested with a maximum of 7 nodes.*
 
 ### Prerequisites
 
@@ -25,22 +28,21 @@ Subsequently, it calculates and averages all the local states acquired, and chec
   pip install bitarray
   ```
 
-### Setup
+  ### Setup
 
-1. To change the setup of the network, edit the .simulaqron.json file in the testGM/ folder.
-See: https://softwarequtech.github.io/SimulaQron/html/ConfNodes.html
-The default configuration is:
-```
-{
-    "backend": "projectq",
-    "log-level": 10
-    "max-qubits": 40
-    "max-registers":100
-    "recv-timeout":5.0
-}
+  1. To change the setup of the network, edit the .simulaqron.json file in the testGMTree/ folder.
+  See: https://softwarequtech.github.io/SimulaQron/html/ConfNodes.html
+  The default configuration is:
+  ```
+  {
+      "backend": "projectq",
+      "log-level": 10
+      "max-qubits": 40
+      "max-registers":100
+      "recv-timeout":5.0
+  }
 
-```
-
+  ```
 
 ## Running
 
@@ -60,7 +62,7 @@ The default configuration is:
 If you want to set up a different network of nodes you can change some parameters in the following files:
 * In the *run.sh* file you can change the number of nodes, and specify for each node its name and the probability that it will suffer a local violation.
   Note: if you change the number of nodes you also need to update the value of the 'n' variable in the main function of the *gmnode.py* file.
-* In the *gmnode.py* file you can change the value of the variable 'd' where d/2 represents the number of qubits used by each node.
+* In the *gmnode.py* file you can change the value of the variable 'd' where d is the number of bits used to represent the state of each node.
 * In the *gmnode.py* file you can change the value of the variable 't' if you want to change the threshold value.
 * In the *gmnode.py* file you can change the value of the variable 'l' if you want to change the number of protocol executions.
 
