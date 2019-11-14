@@ -1,16 +1,19 @@
 # Quantum Geometric Monitoring (QGM)
 
-Implementation and testing of the QGM protocol with [SimulaQron](http://www.simulaqron.org/) v.3.0.10
+Implementation and testing of the QGM-Tree protocol with [SimulaQron](http://www.simulaqron.org/) v.3.0.10
 
 ## Getting Started
 
-In this example we have N nodes where the root node is the only parent node (the coordinator) while all the others are child nodes (the producers).
+In this example we have N nodes forming a binary tree.
+The root of the tree is named 'node0', which can only play the role of the coordinator.
+Every other node can play both the role of coordinator and producer.
 
-Child nodes can suffer a local violation.
-Each child node maintains its own global sub-state that communicates to the parent node only if it exceeds a pre-set threshold.
+Only leaf nodes (i.e., nodes without child nodes) can suffer a local violation.
+Each sub-tree maintains its own global sub-state that communicates to the upper parent node only if it exceeds a pre-set threshold.
 
-When a child node suffers a local violation, it communicates the variation to the parent node, which acquires also the variation of the other child nodes.
-Subsequently, it calculates and averages the states and checks whether the threshold has been exceeded.
+When a leaf node suffers a local violation, it communicates the variation to the parent node, which acquires also the variation of the other brother node.
+Subsequently, it calculates and averages the two states and checks whether the threshold has been exceeded.
+If the threshold has been exceeded, this procedure is repeated in the upper level sub-tree.
 
 *Note: the current version has been tested with a maximum of 7 nodes.*
 
@@ -27,32 +30,32 @@ Subsequently, it calculates and averages the states and checks whether the thres
 
 ### Setup
 
-    1. To change the setup of the network, edit the .simulaqron.json file in the testQGM/ folder.
-    See: https://softwarequtech.github.io/SimulaQron/html/ConfNodes.html
-    The default configuration is:
-    ```
-    {
-        "backend": "projectq",
-        "log-level": 10
-        "max-qubits": 40
-        "max-registers":100
-        "recv-timeout":20.0
-    }
+  1. To change the setup of the network, edit the .simulaqron.json file in the testQGMTree/ folder.
+  See: https://softwarequtech.github.io/SimulaQron/html/ConfNodes.html
+  The default configuration is:
+      ```
+      {
+          "backend": "projectq",
+          "log-level": 10
+          "max-qubits": 40
+          "max-registers":100
+          "recv-timeout":20.0
+      }
 
-    ```
+      ```
 
 ## Running
 
     1. To start SimulaQron, open a first shell and execute:
-       ```
-       simulaqron start --nodes node0,node1,node2,node3,node4,node5,node6
+      ```
+      simulaqron start --nodes node0,node1,node2,node3,node4,node5,node6
 
-       ```
+      ```
 
-    2. Open a second shell, enter the testQGM/ folder and execute:
-       ```
-       ./run.sh
-       ```
+    2. Open a second shell, enter the testQGMTree/ folder and execute:
+      ```
+      ./run.sh
+      ```
 
 ### Settings
 
